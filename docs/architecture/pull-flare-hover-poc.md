@@ -25,3 +25,13 @@ Owner's in-game checks:
 3. Judge whether the outline is clear and whether tinting the glyph/text is acceptable. This cannot be established by compilation alone.
 
 Before importing, use Mod Manager's managed LE3 backup and record its current modified files. This experiment targets the basegame `SFXGame.pcc` through Mod Manager's Merge Mod; uninstall by reverting to the manager backup and reapplying desired mods, rather than manually overwriting the package. No game files were altered by this repository's scripts.
+
+## Owner feedback and 1.1 revision
+
+The owner confirmed the 1.0 colors work in game. Hovering Flare showed strong red and blue. Hovering Pull showed both colors much darker, although both powers remained selectable. This is an unintended visual difference, not a signal about combo order. The exact native/Scaleform dimming step has not been isolated; both colors changing together suggests an icon state or hover transition rather than the hard-coded role mapping.
+
+Version 1.1 applies a small additive color component after `Super.Update` on each frame, so a dark state gets extra light. Its intensity follows a sine wave using `WorldInfo.RealTimeSeconds`, which continues through wheel time dilation. Both icons share the same pulse phase and color strength regardless of which is hovered. Only their current and desired state clips are updated per frame; `LeavePowerIcon` still restores all eight named states. The pulse uses color only and does not change power state, cooldown, hit testing, or save data.
+
+Visual parity, smoothness, and the effect of the additive color on the glyph and background require another in-game check. Outline-only tint remains unimplemented because the SWF outline shape is unnamed.
+
+The 1.1 UnrealScript validation passed against the installed LE3 package, and Mod Manager produced M3M v1 SHA256 `13969062759A067A2C4974D4DFC965B63B0E2812E8CA90B15F888FC9B0912AA7`. Export: `dist/EnhancedPowerWheel-LE3-PullFlarePulse-POC-13969062759A/`. The installed `SFXGame.pcc` hash after this export was `A392FA7379C2C4CCACCF5ED4FC3C40B925E265F5E3719CEAF36CEFA88F08C8B6`. The build/export scripts did not install the mod.

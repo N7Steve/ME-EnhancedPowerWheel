@@ -7,6 +7,12 @@ public event function Update(float fDeltaT)
     local string sPhase;
     local float fAlpha;
     local int nIcon;
+    local int nState;
+    local Name nmHovered;
+    local Name nmCandidate;
+    local GFxValue oStateClip;
+    local ASColorTransform oTint;
+    local float fPulse;
 
     Super.Update(fDeltaT);
     if (m_ePowerWheelMode == SFXPowerWheelMode.PWM_Powers && m_aPowerIconInfo.Length > 0 && m_aPowerIconInfo[0].Id == "P")
@@ -23,6 +29,48 @@ public event function Update(float fDeltaT)
     }
     sState = m_aPowerIconInfo[0].Id;
     sPhase = Mid(sState, 18, 1);
+
+    // Reapply after the native update: the SWF can dim a different state on hover.
+    // Real time keeps the pulse moving while the power wheel slows game time.
+    if (m_nCurrentPowerIconIndex >= 0 && m_nCurrentPowerIconIndex < m_aPowerIcons.Length && m_aPowerIcons[m_nCurrentPowerIconIndex].pPower != None)
+    {
+        nmHovered = m_aPowerIcons[m_nCurrentPowerIconIndex].pPower.PowerName;
+        if (nmHovered == 'Pull' || nmHovered == 'Flare')
+        {
+            fPulse = 0.5 + 0.5 * Sin(m_pPlayerController.WorldInfo.RealTimeSeconds * 5.2);
+            oTint.Multiply.A = 1.0;
+            for (nIcon = 0; nIcon < m_aPowerIcons.Length; ++nIcon)
+            {
+                if (m_oPowerIndices.aPlayer.Find(nIcon) == -1 || m_aPowerIcons[nIcon].pPower == None)
+                {
+                    continue;
+                }
+                nmCandidate = m_aPowerIcons[nIcon].pPower.PowerName;
+                if (nmCandidate != 'Pull' && nmCandidate != 'Flare')
+                {
+                    continue;
+                }
+                oTint.Multiply.R = nmCandidate == 'Pull' ? 0.15 : 1.0;
+                oTint.Multiply.G = nmCandidate == 'Pull' ? 0.55 : 0.15;
+                oTint.Multiply.B = nmCandidate == 'Pull' ? 1.0 : 0.15;
+                oTint.Add.R = nmCandidate == 'Pull' ? 0.0 : 0.35 + 0.20 * fPulse;
+                oTint.Add.G = nmCandidate == 'Pull' ? 0.14 + 0.10 * fPulse : 0.0;
+                oTint.Add.B = nmCandidate == 'Pull' ? 0.35 + 0.20 * fPulse : 0.0;
+                for (nState = 0; nState < 8; ++nState)
+                {
+                    if (nState != int(m_aPowerIcons[nIcon].eState) && nState != int(m_aPowerIcons[nIcon].eDesiredState))
+                    {
+                        continue;
+                    }
+                    oStateClip = GetVariableObject(m_aPowerIcons[nIcon].sPath $ ".powerIconMC.sub." $ m_aPowerIcons[nIcon].m_aPowerStatePaths[nState]);
+                    if (oStateClip != None)
+                    {
+                        oStateClip.SetColorTransform(oTint);
+                    }
+                }
+            }
+        }
+    }
     if (sPhase != "O" && sPhase != "I")
     {
         return;
