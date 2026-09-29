@@ -55,12 +55,6 @@ public event function WheelVisibilityChanged(bool bVisible)
     }
     else
     {
-        if (m_ePowerWheelMode == SFXPowerWheelMode.PWM_Powers && m_aPowerIconInfo.Length > 0)
-        {
-            // Populate the saved layout before showing the wheel's vanilla clips.
-            m_aPowerIconInfo[0].Id = "";
-            HandleInputEvent(BioGuiEvents.BIOGUI_EVENT_BUTTON_LTHUMB, -1.0);
-        }
         if (m_ePowerWheelMode == SFXPowerWheelMode.PWM_Weapons || m_ePowerWheelMode == SFXPowerWheelMode.PWM_PC)
         {
             bWeaponWheel = TRUE;
@@ -101,5 +95,11 @@ public event function WheelVisibilityChanged(bool bVisible)
             }
         }
         BioHintSystem(m_pPlayerController.HintSystem).GeneratePowerWheelTutorialHint(bPowerWheel, bWeaponWheel);
+        if (m_ePowerWheelMode == SFXPowerWheelMode.PWM_Powers && m_aPowerIconInfo.Length > 0)
+        {
+            // ShowWheel can reinitialize the vanilla clip artwork; apply the saved page afterward.
+            m_aPowerIconInfo[0].Id = "";
+            HandleInputEvent(BioGuiEvents.BIOGUI_EVENT_BUTTON_LTHUMB, -1.0);
+        }
     }
 }
