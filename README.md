@@ -7,11 +7,11 @@ Enhanced Power Wheel is an experimental mod project for the Power Wheel in Mass 
 The initial proof of concept has two pages while the Power Wheel stays open:
 
 - Page 0 shows the vanilla powers and behavior.
-- R3 (right stick click) advances to page 1, where the wheel remains visible but no powers can be selected.
+- R3 (right stick click) advances to page 1.
 - L3 (left stick click) returns to page 0.
 - Input at either page boundary does nothing; closing and reopening starts on page 0.
 
-This behavior now has a **compiled Merge Mod experiment**, but it has not been deployed or tested in game. No increased power count or mod compatibility is claimed.
+The initial empty-page experiment worked in game, as reported by the project owner. The current **ordering experiment** renders eight player slots on page 1. Press LT on a player power, then LT on a destination slot on either page to move it; occupied destinations swap. Ordering is temporary for that wheel opening. This newer experiment compiles but still needs gameplay testing. No increased power count or mod compatibility is claimed.
 
 ## Development
 
@@ -19,7 +19,7 @@ Prerequisites: a local LE3 installation, the pinned LegendaryExplorer source che
 
 ## Status
 
-Repository setup and static LE3 investigation are complete. The source and compiled experiment need a clean, restorable LE3 test target and gameplay validation. See [current findings](docs/research/le3-power-wheel.md).
+Repository setup and static LE3 investigation are complete. The original empty-page pagination works in game. The LT move/swap iteration is built but untested. See [ordering POC](docs/architecture/ordering-poc.md) and [LE3 findings](docs/research/le3-power-wheel.md).
 
 ## Rights
 

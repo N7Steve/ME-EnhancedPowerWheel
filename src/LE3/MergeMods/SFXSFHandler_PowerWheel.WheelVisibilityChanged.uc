@@ -3,12 +3,12 @@ public event function WheelVisibilityChanged(bool bVisible)
     local int nIcon;
     local bool bPowerWheel;
     local bool bWeaponWheel;
-    local bool bWasEmptyPage;
+    local bool bHadOrderState;
     local GFxValue oWheel;
 
     if (!bVisible)
     {
-        bWasEmptyPage = m_ePowerWheelMode == SFXPowerWheelMode.PWM_Powers && m_aPowerIcons.Length > 5 && !m_aPowerIcons[5].bVisible;
+        bHadOrderState = m_ePowerWheelMode == SFXPowerWheelMode.PWM_Powers && m_aPowerIconInfo.Length > 0 && m_aPowerIconInfo[0].Id != "";
         if (m_ePowerWheelMode == SFXPowerWheelMode.PWM_Weapons || m_ePowerWheelMode == SFXPowerWheelMode.PWM_PC)
         {
             LeaveWeaponIcon(m_nCurrentWeaponIconIndex);
@@ -47,9 +47,16 @@ public event function WheelVisibilityChanged(bool bVisible)
         {
             m_pPlayerController.GenerateTutorialEvent(9);
         }
-        // Restore native power data while hidden so the next opening starts on page 0.
-        if (bWasEmptyPage)
+        // Ordering is session-only; next opening starts with native page 0.
+        if (bHadOrderState)
         {
+            m_aPowerIconInfo[0].Id = "";
+            for (nIcon = 0; nIcon < m_oPowerIndices.aPlayer.Length; ++nIcon)
+            {
+                m_aPowerIcons[m_oPowerIndices.aPlayer[nIcon]].ClearIcon();
+                m_aPowerIcons[m_oPowerIndices.aPlayer[nIcon]].pPower = None;
+                m_aPowerIcons[m_oPowerIndices.aPlayer[nIcon]].pPawn = None;
+            }
             SetupPlayerPowers();
         }
     }

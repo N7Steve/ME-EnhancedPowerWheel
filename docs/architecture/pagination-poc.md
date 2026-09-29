@@ -16,4 +16,4 @@ Test in game that the wheel stays open, icons vanish and restore with current co
 
 ## Status
 
-The three replacements compile against the installed LE3 package and serialize into an M3M v1 artifact. No game installation or gameplay validation has been performed. The installed target already contains Dynamic Time Wheels changes, including old class additions; establish a clean, restorable test target before deployment.
+The project owner confirmed this first empty-page POC works in game. Its implementation has since advanced to the [LT ordering POC](ordering-poc.md), which is built but not yet gameplay-tested.

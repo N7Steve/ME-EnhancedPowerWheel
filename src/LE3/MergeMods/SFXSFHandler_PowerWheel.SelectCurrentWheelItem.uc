@@ -6,8 +6,12 @@ public final function SelectCurrentWheelItem(SFXPowerWheelMode eMode)
     }
     else if (eMode == SFXPowerWheelMode.PWM_Powers)
     {
-        // This also guards the PC movie's mouse-up selection path.
-        if (m_aPowerIcons.Length > 5 && !m_aPowerIcons[5].bVisible)
+        // Empty slots cannot activate, including through the PC mouse-up path.
+        if (m_nCurrentPowerIconIndex < 0 || m_nCurrentPowerIconIndex >= m_aPowerIcons.Length)
+        {
+            return;
+        }
+        if (m_aPowerIcons[m_nCurrentPowerIconIndex].eState == SFXPowerWheelPowerState.PWPS_EmptySelectable || m_aPowerIcons[m_nCurrentPowerIconIndex].eState == SFXPowerWheelPowerState.PWPS_EmptySelected)
         {
             return;
         }
