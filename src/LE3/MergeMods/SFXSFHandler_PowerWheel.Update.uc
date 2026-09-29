@@ -11,7 +11,8 @@ public event function Update(float fDeltaT)
     local Name nmHovered;
     local Name nmCandidate;
     local GFxValue oStateClip;
-    local ASColorTransform oTint;
+    local GFxValue oOutline;
+    local array<ASValue> aArgs;
     local float fPulse;
 
     Super.Update(fDeltaT);
@@ -30,15 +31,14 @@ public event function Update(float fDeltaT)
     sState = m_aPowerIconInfo[0].Id;
     sPhase = Mid(sState, 18, 1);
 
-    // Reapply after the native update: the SWF can dim a different state on hover.
-    // Real time keeps the pulse moving while the power wheel slows game time.
+    // Draw only the complementary power's outline. The SWF border shape is
+    // unnamed, so an empty clip traces its authored geometry above the state.
     if (m_nCurrentPowerIconIndex >= 0 && m_nCurrentPowerIconIndex < m_aPowerIcons.Length && m_aPowerIcons[m_nCurrentPowerIconIndex].pPower != None)
     {
         nmHovered = m_aPowerIcons[m_nCurrentPowerIconIndex].pPower.PowerName;
         if (nmHovered == 'Pull' || nmHovered == 'Flare')
         {
             fPulse = 0.5 + 0.5 * Sin(m_pPlayerController.WorldInfo.RealTimeSeconds * 5.2);
-            oTint.Multiply.A = 1.0;
             for (nIcon = 0; nIcon < m_aPowerIcons.Length; ++nIcon)
             {
                 if (m_oPowerIndices.aPlayer.Find(nIcon) == -1 || m_aPowerIcons[nIcon].pPower == None)
@@ -46,18 +46,10 @@ public event function Update(float fDeltaT)
                     continue;
                 }
                 nmCandidate = m_aPowerIcons[nIcon].pPower.PowerName;
-                if (nmCandidate != 'Pull' && nmCandidate != 'Flare')
+                if ((nmHovered == 'Pull' && nmCandidate != 'Flare') || (nmHovered == 'Flare' && nmCandidate != 'Pull'))
                 {
                     continue;
                 }
-                // GFx additive terms use 0-255 color units. A fixed RGB target
-                // gives the same brightness across the SWF's different states.
-                oTint.Multiply.R = 0.0;
-                oTint.Multiply.G = 0.0;
-                oTint.Multiply.B = 0.0;
-                oTint.Add.R = nmCandidate == 'Pull' ? 0.0 : 190.0 + 40.0 * fPulse;
-                oTint.Add.G = nmCandidate == 'Pull' ? 75.0 + 25.0 * fPulse : 0.0;
-                oTint.Add.B = nmCandidate == 'Pull' ? 190.0 + 40.0 * fPulse : 0.0;
                 for (nState = 0; nState < 8; ++nState)
                 {
                     if (nState != int(m_aPowerIcons[nIcon].eState) && nState != int(m_aPowerIcons[nIcon].eDesiredState))
@@ -65,10 +57,64 @@ public event function Update(float fDeltaT)
                         continue;
                     }
                     oStateClip = GetVariableObject(m_aPowerIcons[nIcon].sPath $ ".powerIconMC.sub." $ m_aPowerIcons[nIcon].m_aPowerStatePaths[nState]);
-                    if (oStateClip != None)
+                    if (oStateClip == None)
                     {
-                        oStateClip.SetColorTransform(oTint);
+                        continue;
                     }
+                    oOutline = oStateClip.GetObject("EPWComboOutline");
+                    if (oOutline == None)
+                    {
+                        oOutline = oStateClip.CreateEmptyMovieClip("EPWComboOutline", 100);
+                        if (oOutline == None)
+                        {
+                            continue;
+                        }
+                        // Line thickness is in Flash pixels. Colors are 0xRRGGBB.
+                        aArgs.Length = 3;
+                        aArgs[0].Type = ASType.AS_Number;
+                        aArgs[1].Type = ASType.AS_Number;
+                        aArgs[2].Type = ASType.AS_Number;
+                        aArgs[0].N = 0.85;
+                        aArgs[1].N = nmCandidate == 'Flare' ? 15222349.0 : 9072854.0;
+                        aArgs[2].N = 100.0;
+                        oOutline.Invoke("lineStyle", aArgs);
+                        aArgs.Length = 2;
+                        aArgs[0].N = -37.0;
+                        aArgs[1].N = -6.45;
+                        oOutline.Invoke("moveTo", aArgs);
+                        aArgs.Length = 4;
+                        aArgs[2].Type = ASType.AS_Number;
+                        aArgs[3].Type = ASType.AS_Number;
+                        aArgs[0].N = -10.2;
+                        aArgs[1].N = -11.25;
+                        aArgs[2].N = 16.65;
+                        aArgs[3].N = -4.95;
+                        oOutline.Invoke("curveTo", aArgs);
+                        aArgs.Length = 2;
+                        aArgs[0].N = 16.65;
+                        aArgs[1].N = 22.9;
+                        oOutline.Invoke("lineTo", aArgs);
+                        aArgs[0].N = 6.05;
+                        aArgs[1].N = 33.55;
+                        oOutline.Invoke("lineTo", aArgs);
+                        aArgs[0].N = -33.6;
+                        aArgs[1].N = 33.55;
+                        oOutline.Invoke("lineTo", aArgs);
+                        aArgs[0].N = -44.25;
+                        aArgs[1].N = 22.9;
+                        oOutline.Invoke("lineTo", aArgs);
+                        aArgs[0].N = -44.25;
+                        aArgs[1].N = -4.95;
+                        oOutline.Invoke("lineTo", aArgs);
+                        aArgs[0].N = -37.0;
+                        aArgs[1].N = -6.45;
+                        oOutline.Invoke("lineTo", aArgs);
+                    }
+                    oOutline.SetVisible(TRUE);
+                    oDisplay = oOutline.GetDisplayInfo();
+                    oDisplay.hasAlpha = TRUE;
+                    oDisplay.Alpha = nmCandidate == 'Flare' ? 38.0 + 16.0 * fPulse : 18.0 + 10.0 * fPulse;
+                    oOutline.SetDisplayInfo(oDisplay);
                 }
             }
         }

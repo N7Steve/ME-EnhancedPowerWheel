@@ -1,6 +1,7 @@
 public final event function LeavePowerIcon(int nIconIndex, bool bSkipTransition)
 {
     local GFxValue oStateClip;
+    local GFxValue oOutline;
     local ASColorTransform oNormal;
     local int nCandidate;
     local int nState;
@@ -33,6 +34,11 @@ public final event function LeavePowerIcon(int nIconIndex, bool bSkipTransition)
             if (oStateClip != None)
             {
                 oStateClip.SetColorTransform(oNormal);
+                oOutline = oStateClip.GetObject("EPWComboOutline");
+                if (oOutline != None)
+                {
+                    oOutline.SetVisible(FALSE);
+                }
             }
         }
     }
