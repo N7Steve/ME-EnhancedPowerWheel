@@ -6,7 +6,13 @@ public event function bool HandleInputEvent(BioGuiEvents Event, optional float f
     local int nSelectedSlot;
     local int nSourceSlot;
     local int nPage;
+    local int nGroup;
+    local int nPacked;
+    local int nValue;
+    local int nSeen;
+    local bool bValidMap;
     local bool bRefreshPage;
+    local BioGlobalVariableTable oPlot;
     local string sState;
     local string sMap;
     local string sSelected;
@@ -26,10 +32,51 @@ public event function bool HandleInputEvent(BioGuiEvents Event, optional float f
     local array<SFXPowerWheelMapButtonIcon> aMapIcons;
 
     // 16 source-slot characters, one selected-slot character, one page.
-    // This temporary state is reset before InitPowerIcons can run again.
+    // Plot ints 740200-740204 persist the map in each save game.
     if (m_ePowerWheelMode == SFXPowerWheelMode.PWM_Powers && m_aPowerIconInfo.Length > 0 && m_aPowerIconInfo[0].Id == "")
     {
-        m_aPowerIconInfo[0].Id = "01234567--------X0";
+        sMap = "01234567--------";
+        oPlot = BioWorldInfo(oWorldInfo).GetGlobalVariables();
+        if (oPlot != None && oPlot.GetInt(740200) == 2)
+        {
+            sState = "";
+            bValidMap = TRUE;
+            for (nGroup = 3; nGroup >= 0; --nGroup)
+            {
+                nPacked = oPlot.GetInt(740201 + nGroup);
+                if (nPacked < 0 || nPacked > 65535)
+                {
+                    bValidMap = FALSE;
+                }
+                for (nSlot = 0; nSlot < 4; ++nSlot)
+                {
+                    nValue = nPacked % 16;
+                    nPacked = nPacked / 16;
+                    if (nValue < 8)
+                    {
+                        if ((nSeen & (1 << nValue)) != 0)
+                        {
+                            bValidMap = FALSE;
+                        }
+                        nSeen = nSeen | (1 << nValue);
+                        sState = Mid("01234567", nValue, 1) $ sState;
+                    }
+                    else
+                    {
+                        if (nValue != 15)
+                        {
+                            bValidMap = FALSE;
+                        }
+                        sState = "-" $ sState;
+                    }
+                }
+            }
+            if (bValidMap && nSeen == 255)
+            {
+                sMap = sState;
+            }
+        }
+        m_aPowerIconInfo[0].Id = sMap $ "X0";
     }
     sState = m_aPowerIconInfo[0].Id;
     sMap = Left(sState, 16);
@@ -58,7 +105,7 @@ public event function bool HandleInputEvent(BioGuiEvents Event, optional float f
         case BioGuiEvents.BIOGUI_EVENT_BUTTON_LTHUMB:
             if (m_ePowerWheelMode == SFXPowerWheelMode.PWM_Powers)
             {
-                if (nPage == 1)
+                if (nPage == 1 || fValue < 0.0)
                 {
                     nPage = 0;
                     bRefreshPage = TRUE;
@@ -90,6 +137,27 @@ public event function bool HandleInputEvent(BioGuiEvents Event, optional float f
                             sTarget = Mid(sMap, nAbsoluteSlot, 1);
                             sMap = Left(sMap, nSelectedSlot) $ sTarget $ Mid(sMap, nSelectedSlot + 1);
                             sMap = Left(sMap, nAbsoluteSlot) $ sSource $ Mid(sMap, nAbsoluteSlot + 1);
+                            oPlot = BioWorldInfo(oWorldInfo).GetGlobalVariables();
+                            if (oPlot != None)
+                            {
+                                oPlot.SetInt(740200, 0, TRUE);
+                                for (nGroup = 0; nGroup < 4; ++nGroup)
+                                {
+                                    nPacked = 0;
+                                    for (nIcon = 0; nIcon < 4; ++nIcon)
+                                    {
+                                        nPacked = nPacked * 16;
+                                        nValue = InStr("01234567", Mid(sMap, nGroup * 4 + nIcon, 1));
+                                        if (nValue < 0)
+                                        {
+                                            nValue = 15;
+                                        }
+                                        nPacked = nPacked + nValue;
+                                    }
+                                    oPlot.SetInt(740201 + nGroup, nPacked, TRUE);
+                                }
+                                oPlot.SetInt(740200, 2, TRUE);
+                            }
                             bRefreshPage = TRUE;
                         }
                         sSelected = "X";
@@ -200,19 +268,28 @@ public event function bool HandleInputEvent(BioGuiEvents Event, optional float f
             m_aPowerIcons[nIcon].nCooldownValue = aCooldowns[nSourceSlot];
             m_aPowerIcons[nIcon].bMapped = aMapped[nSourceSlot];
             m_aPowerIcons[nIcon].oMappedIcon.eIcon = aMapIcons[nSourceSlot];
-            m_aPowerIcons[nIcon].eDesiredState = aDesiredStates[nSourceSlot];
-            m_aPowerIcons[nIcon].SetState(aStates[nSourceSlot], TRUE);
+            if (aStates[nSourceSlot] == SFXPowerWheelPowerState.PWPS_Selected)
+            {
+                m_aPowerIcons[nIcon].eDesiredState = SFXPowerWheelPowerState.PWPS_Selectable;
+                m_aPowerIcons[nIcon].SetState(SFXPowerWheelPowerState.PWPS_Selectable, TRUE);
+            }
+            else
+            {
+                m_aPowerIcons[nIcon].eDesiredState = aDesiredStates[nSourceSlot];
+                m_aPowerIcons[nIcon].SetState(aStates[nSourceSlot], TRUE);
+            }
         }
         else
         {
             m_aPowerIcons[nIcon].pPower = None;
             m_aPowerIcons[nIcon].pPawn = None;
-            m_aPowerIcons[nIcon].eState = SFXPowerWheelPowerState.PWPS_EmptySelectable;
             m_aPowerIcons[nIcon].eDesiredState = SFXPowerWheelPowerState.PWPS_EmptySelectable;
+            m_aPowerIcons[nIcon].SetState(SFXPowerWheelPowerState.PWPS_EmptySelectable, TRUE);
         }
         m_aPowerIcons[nIcon].bDirty = TRUE;
         m_aPowerIcons[nIcon].SetVisible(TRUE);
         m_aPowerIcons[nIcon].UpdateDisplay();
+        m_aPowerIcons[nIcon].SetStateDisplay();
     }
     SetInformationText("", "", FALSE);
     SetUseText("");

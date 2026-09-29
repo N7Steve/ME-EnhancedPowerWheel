@@ -47,7 +47,7 @@ public event function WheelVisibilityChanged(bool bVisible)
         {
             m_pPlayerController.GenerateTutorialEvent(9);
         }
-        // Ordering is session-only; next opening starts with native page 0.
+        // Keep native icons ready for the next opening; the map lives in plot ints.
         if (bHadOrderState)
         {
             m_aPowerIconInfo[0].Id = "";
@@ -102,5 +102,11 @@ public event function WheelVisibilityChanged(bool bVisible)
             }
         }
         BioHintSystem(m_pPlayerController.HintSystem).GeneratePowerWheelTutorialHint(bPowerWheel, bWeaponWheel);
+        if (m_ePowerWheelMode == SFXPowerWheelMode.PWM_Powers && m_aPowerIconInfo.Length > 0)
+        {
+            // Rehydrate from the current save, including after loading a different save.
+            m_aPowerIconInfo[0].Id = "";
+            HandleInputEvent(BioGuiEvents.BIOGUI_EVENT_BUTTON_LTHUMB, -1.0);
+        }
     }
 }
