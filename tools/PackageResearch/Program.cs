@@ -4,6 +4,7 @@ using System.Text.RegularExpressions;
 using LegendaryExplorerCore;
 using LegendaryExplorerCore.Packages;
 using LegendaryExplorerCore.UnrealScript;
+using LegendaryExplorerCore.Unreal;
 
 try { return Run(args); }
 catch (Exception exception)
@@ -15,6 +16,17 @@ catch (Exception exception)
 static int Run(string[] args)
 {
     // Read-only inspection and in-memory compilation. Never saves a game package.
+    if (args.Length == 4 && args[0] == "extractswf")
+    {
+        LegendaryExplorerCoreLib.InitLib(TaskScheduler.Default);
+        using var moviePackage = MEPackageHandler.OpenMEPackage(Path.GetFullPath(args[1]));
+        var movie = moviePackage.Exports.Single(e => e.InstancedFullPath == args[2] && e.ClassName == "GFxMovieInfo");
+        var data = movie.GetProperty<ImmutableByteArrayProperty>("RawData")?.Bytes
+                   ?? throw new InvalidOperationException("Movie has no RawData.");
+        File.WriteAllBytes(Path.GetFullPath(args[3]), data);
+        Console.WriteLine($"Extracted {data.Length} bytes for local research only.");
+        return 0;
+    }
     if (args.Length == 3 && args[0] == "list")
     {
         LegendaryExplorerCoreLib.InitLib(TaskScheduler.Default);

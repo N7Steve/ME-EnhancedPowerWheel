@@ -23,3 +23,5 @@ Un poder puede preparar y detonar distintos tipos; la función debe elegir el ro
 3. Después del ensayo visual, obtener los tipos de efecto preparados de las clases de poderes necesarias y contrastarlos con `ComboDetonators` del `pPower` real. Muchos primers crean efectos en funciones específicas, no en una propiedad común; una tabla pequeña de tipos confirmados por poder es más prudente para un POC que afirmar una detección universal. Verificar evoluciones, mods y poderes de compañeros antes de ampliar cobertura.
 
 **Estado:** factible en principio por el evento de hover y la API GFx, pero el requisito exacto de colorear solo el borde depende de la estructura del SWF y necesita prueba en juego. No se ha cambiado el juego instalado ni el código de la rueda.
+
+Actualización: el [POC Pull/Flare](../architecture/pull-flare-hover-poc.md) inspeccionó el SWF y compiló una prueba de tinte del estado visual completo. Aún necesita validación en juego; no demuestra que se pueda colorear exclusivamente el borde.

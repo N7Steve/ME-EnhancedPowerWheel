@@ -4,6 +4,8 @@ Enhanced Power Wheel is an experimental mod project for the Power Wheel in Mass 
 
 ## LE3 checkpoint: two-page ordering wheel
 
+Version 1.0 is an unverified visual POC: hovering Pull (Atracción) or Flare (Bengala) tints Pull blue and Flare red on the visible player wheel, regardless of combo compatibility. See [Pull/Flare hover POC](docs/architecture/pull-flare-hover-poc.md). The exported Mod Manager folder is under `dist/` and has not been installed by the build scripts.
+
 Version 0.8's page fade was confirmed in game, but it also fades the vignette and portraits. Version 0.9 limits the fade to power icons and their mapping clips; the owner confirmed this result works in game. See [fade POC](docs/architecture/fade-poc.md) and [icon-fade POC](docs/architecture/icon-fade-poc.md).
 
 The current LE3 proof of concept has two pages while the Power Wheel stays open:

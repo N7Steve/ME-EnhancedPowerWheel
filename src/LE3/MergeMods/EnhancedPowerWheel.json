@@ -33,6 +33,12 @@
           "scriptupdate": {
             "scriptfilename": "SFXSFHandler_PowerWheel.HoverPowerIcon.uc"
           }
+        },
+        {
+          "entryname": "SFXSFHandler_PowerWheel.LeavePowerIcon",
+          "scriptupdate": {
+            "scriptfilename": "SFXSFHandler_PowerWheel.LeavePowerIcon.uc"
+          }
         }
       ]
     }
