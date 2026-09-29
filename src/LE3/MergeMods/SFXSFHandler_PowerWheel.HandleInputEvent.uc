@@ -215,6 +215,7 @@ public event function bool HandleInputEvent(BioGuiEvents Event, optional float f
     for (nSlot = 0; nSlot < 8; ++nSlot)
     {
         nIcon = m_oPowerIndices.aPlayer[nSlot];
+        m_aPowerIcons[nIcon].Hide();
         m_aPowerIcons[nIcon].ClearIcon();
         m_aPowerIcons[nIcon].pPower = None;
         m_aPowerIcons[nIcon].pPawn = None;
@@ -256,6 +257,7 @@ public event function bool HandleInputEvent(BioGuiEvents Event, optional float f
         nIcon = m_oPowerIndices.aPlayer[nSlot];
         nSourceSlot = InStr("01234567", Mid(sMap, nPage * 8 + nSlot, 1));
         m_aPowerIcons[nIcon].SetSelected(FALSE);
+        m_aPowerIcons[nIcon].Hide();
         m_aPowerIcons[nIcon].ClearIcon();
         if (nSourceSlot >= 0 && aPowers[nSourceSlot] != None)
         {
@@ -290,6 +292,7 @@ public event function bool HandleInputEvent(BioGuiEvents Event, optional float f
         m_aPowerIcons[nIcon].SetVisible(TRUE);
         m_aPowerIcons[nIcon].UpdateDisplay();
         m_aPowerIcons[nIcon].SetStateDisplay();
+        m_aPowerIcons[nIcon].MadeVisible(TRUE);
     }
     SetInformationText("", "", FALSE);
     SetUseText("");
