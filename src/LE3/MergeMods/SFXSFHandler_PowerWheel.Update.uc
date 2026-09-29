@@ -38,7 +38,6 @@ public event function Update(float fDeltaT)
         nmHovered = m_aPowerIcons[m_nCurrentPowerIconIndex].pPower.PowerName;
         if (nmHovered == 'Pull' || nmHovered == 'Flare')
         {
-            fPulse = 0.5 + 0.5 * Sin(m_pPlayerController.WorldInfo.RealTimeSeconds * 5.2);
             for (nIcon = 0; nIcon < m_aPowerIcons.Length; ++nIcon)
             {
                 if (m_oPowerIndices.aPlayer.Find(nIcon) == -1 || m_aPowerIcons[nIcon].pPower == None)
@@ -49,6 +48,17 @@ public event function Update(float fDeltaT)
                 if ((nmHovered == 'Pull' && nmCandidate != 'Flare') || (nmHovered == 'Flare' && nmCandidate != 'Pull'))
                 {
                     continue;
+                }
+                if (nmCandidate == 'Flare')
+                {
+                    // A short bright crest makes the detonator catch the eye.
+                    fPulse = 0.5 + 0.5 * Sin(m_pPlayerController.WorldInfo.RealTimeSeconds * 7.5);
+                    fPulse *= fPulse;
+                }
+                else
+                {
+                    // The primer breathes slowly and stays less prominent.
+                    fPulse = 0.5 + 0.5 * Sin(m_pPlayerController.WorldInfo.RealTimeSeconds * 2.2);
                 }
                 for (nState = 0; nState < 8; ++nState)
                 {
@@ -74,7 +84,7 @@ public event function Update(float fDeltaT)
                         aArgs[0].Type = ASType.AS_Number;
                         aArgs[1].Type = ASType.AS_Number;
                         aArgs[2].Type = ASType.AS_Number;
-                        aArgs[0].N = 0.85;
+                        aArgs[0].N = nmCandidate == 'Flare' ? 2.0 : 1.6;
                         aArgs[1].N = nmCandidate == 'Flare' ? 15222349.0 : 9072854.0;
                         aArgs[2].N = 100.0;
                         oOutline.Invoke("lineStyle", aArgs);
@@ -113,7 +123,7 @@ public event function Update(float fDeltaT)
                     oOutline.SetVisible(TRUE);
                     oDisplay = oOutline.GetDisplayInfo();
                     oDisplay.hasAlpha = TRUE;
-                    oDisplay.Alpha = nmCandidate == 'Flare' ? 38.0 + 16.0 * fPulse : 18.0 + 10.0 * fPulse;
+                    oDisplay.Alpha = nmCandidate == 'Flare' ? 56.0 + 28.0 * fPulse : 30.0 + 16.0 * fPulse;
                     oOutline.SetDisplayInfo(oDisplay);
                 }
             }

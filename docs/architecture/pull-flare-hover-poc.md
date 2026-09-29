@@ -53,3 +53,9 @@ The controller SWF's `selected`, `selectable`, and `inactive` states use the sam
 The UnrealScript validator and Mod Manager compiler passed for 1.3. M3M v1 SHA256: `FF56088D29302892C39D1FB8AD6B8FFC432F12E6205FEC0263EFF3CD494444EE`. Export: `dist/EnhancedPowerWheel-LE3-ComboOutline-v1.3-FF56088D2930/`. The installed `SFXGame.pcc` hash after export was `EC0FABAAF9AD4180EDB8E4187C44504F66CF81D280AEA004354BD4F845B5BB19`; the build/export scripts did not install the mod.
 
 In-game validation must confirm that the GFx runtime supports creating and drawing into the child clip, that its line matches the border at both icon positions and visual states, that the pulse is subtle, and that switching hover/page or closing leaves no lingering line. Compilation alone cannot confirm those visual behaviors.
+
+## Owner-confirmed 1.3 and outline tuning 1.4
+
+The owner confirmed the 1.3 outlines and directional behavior work in game, but both outlines were extremely thin and hard to see. Version 1.4 keeps the same path and drawing mechanism. It increases the detonator's red line from `0.85` to `2.0` Flash pixels and the primer's blue-violet line to `1.6`. Red alpha now ranges from `56` to `84` percent and follows a squared sine pulse at `7.5` radians per real-time second, giving it a short brighter crest. Violet alpha ranges from `30` to `46` percent on a slower sine pulse at `2.2` radians per second. No power logic or page/ordering behavior changes.
+
+The 1.4 UnrealScript validation and Mod Manager compilation passed. M3M v1 SHA256: `01057A40187D04B5A5D473C5B5A64938CAD0BF001F3C8BA4075E3A6EC4F23C21`. Export: `dist/EnhancedPowerWheel-LE3-ComboOutline-v1.4-01057A40187D/`. The installed `SFXGame.pcc` hash after export was `31491F8C343221D71968A0A657FE05E188651A0ECE89FCEAE0B6E48B2A73A389`. The build/export did not install the mod; border weight and timing still need the owner's in-game assessment.
