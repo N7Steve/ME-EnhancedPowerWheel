@@ -84,8 +84,8 @@ public event function Update(float fDeltaT)
                         aArgs[0].Type = ASType.AS_Number;
                         aArgs[1].Type = ASType.AS_Number;
                         aArgs[2].Type = ASType.AS_Number;
-                        aArgs[0].N = nmCandidate == 'Flare' ? 2.0 : 1.6;
-                        aArgs[1].N = nmCandidate == 'Flare' ? 15222349.0 : 9072854.0;
+                        aArgs[0].N = nmCandidate == 'Flare' ? 2.0 : 1.8;
+                        aArgs[1].N = nmCandidate == 'Flare' ? 15222349.0 : 11177210.0;
                         aArgs[2].N = 100.0;
                         oOutline.Invoke("lineStyle", aArgs);
                         aArgs.Length = 2;
@@ -123,7 +123,7 @@ public event function Update(float fDeltaT)
                     oOutline.SetVisible(TRUE);
                     oDisplay = oOutline.GetDisplayInfo();
                     oDisplay.hasAlpha = TRUE;
-                    oDisplay.Alpha = nmCandidate == 'Flare' ? 56.0 + 28.0 * fPulse : 30.0 + 16.0 * fPulse;
+                    oDisplay.Alpha = nmCandidate == 'Flare' ? 56.0 + 28.0 * fPulse : 44.0 + 20.0 * fPulse;
                     oOutline.SetDisplayInfo(oDisplay);
                 }
             }
