@@ -8,7 +8,7 @@ if (!(Test-Path -LiteralPath $descriptor -PathType Leaf) -or !(Test-Path -Litera
     throw 'Run scripts/Build-Le3.ps1 first.'
 }
 $mergeHash = (Get-FileHash -LiteralPath $merge).Hash
-if (!$Destination) { $Destination = Join-Path $repo ('dist/EnhancedPowerWheel-LE3-PullFlarePulse-POC-' + $mergeHash.Substring(0, 12)) }
+if (!$Destination) { $Destination = Join-Path $repo ('dist/EnhancedPowerWheel-LE3-PullFlarePulse-v1.2-' + $mergeHash.Substring(0, 12)) }
 $destinationPath = [IO.Path]::GetFullPath($Destination)
 if (Test-Path -LiteralPath $destinationPath) { throw "Destination already exists: $destinationPath" }
 New-Item -ItemType Directory -Path (Join-Path $destinationPath 'MergeMods') -Force | Out-Null

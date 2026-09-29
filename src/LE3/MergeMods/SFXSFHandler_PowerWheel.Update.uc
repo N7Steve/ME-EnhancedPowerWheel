@@ -50,12 +50,14 @@ public event function Update(float fDeltaT)
                 {
                     continue;
                 }
-                oTint.Multiply.R = nmCandidate == 'Pull' ? 0.15 : 1.0;
-                oTint.Multiply.G = nmCandidate == 'Pull' ? 0.55 : 0.15;
-                oTint.Multiply.B = nmCandidate == 'Pull' ? 1.0 : 0.15;
-                oTint.Add.R = nmCandidate == 'Pull' ? 0.0 : 0.35 + 0.20 * fPulse;
-                oTint.Add.G = nmCandidate == 'Pull' ? 0.14 + 0.10 * fPulse : 0.0;
-                oTint.Add.B = nmCandidate == 'Pull' ? 0.35 + 0.20 * fPulse : 0.0;
+                // GFx additive terms use 0-255 color units. A fixed RGB target
+                // gives the same brightness across the SWF's different states.
+                oTint.Multiply.R = 0.0;
+                oTint.Multiply.G = 0.0;
+                oTint.Multiply.B = 0.0;
+                oTint.Add.R = nmCandidate == 'Pull' ? 0.0 : 190.0 + 40.0 * fPulse;
+                oTint.Add.G = nmCandidate == 'Pull' ? 75.0 + 25.0 * fPulse : 0.0;
+                oTint.Add.B = nmCandidate == 'Pull' ? 190.0 + 40.0 * fPulse : 0.0;
                 for (nState = 0; nState < 8; ++nState)
                 {
                     if (nState != int(m_aPowerIcons[nIcon].eState) && nState != int(m_aPowerIcons[nIcon].eDesiredState))

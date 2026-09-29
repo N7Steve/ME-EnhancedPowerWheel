@@ -35,3 +35,11 @@ Version 1.1 applies a small additive color component after `Super.Update` on eac
 Visual parity, smoothness, and the effect of the additive color on the glyph and background require another in-game check. Outline-only tint remains unimplemented because the SWF outline shape is unnamed.
 
 The 1.1 UnrealScript validation passed against the installed LE3 package, and Mod Manager produced M3M v1 SHA256 `13969062759A067A2C4974D4DFC965B63B0E2812E8CA90B15F888FC9B0912AA7`. Export: `dist/EnhancedPowerWheel-LE3-PullFlarePulse-POC-13969062759A/`. The installed `SFXGame.pcc` hash after this export was `A392FA7379C2C4CCACCF5ED4FC3C40B925E265F5E3719CEAF36CEFA88F08C8B6`. The build/export scripts did not install the mod.
+
+## 1.1 result and 1.2 diagnosis
+
+The owner installed 1.1 and reported no visible change. A read-only decompilation of the installed `SFXGame.pcc` (SHA256 `8D8603274E11329320F4CD5E3D5FBD7B283BA6179C917E8D68CE6B9C470494B0`) confirmed that its `Update` contains the pulse code and its `HoverPowerIcon` no longer contains the 1.0 static tint. This rules out installing the old Merge Mod as the cause. The local SWF's `CXFORMWITHALPHA` additive color terms use values such as 50, 79, 113, 154 and 201; 1.1 used only 0.14–0.55 in `ASColorTransform.Add`, which is too small on a 0–255 color scale to be visible. This is a source-based diagnosis, not yet a runtime measurement of the native GFx conversion.
+
+Version 1.2 sets RGB multiplication to zero and adds a blue or red color at 190–230 units, with both icons sharing the same sine wave. This is intended to make the output largely independent of the selected/available state's original darkness while preserving pixel alpha and shape. The icon contents will have a flatter color. It is still a visual experiment requiring in-game confirmation of equal brightness and a visible pulse.
+
+The 1.2 script validation passed against the installed LE3 package. Mod Manager produced M3M v1 SHA256 `77DF3DB4C1FCA6817EC55549F09DDC7F7BB6B48812BBEA358BD78EDF692389E4`. Export: `dist/EnhancedPowerWheel-LE3-PullFlarePulse-v1.2-77DF3DB4C1FC/`. The installed `SFXGame.pcc` hash remained `8D8603274E11329320F4CD5E3D5FBD7B283BA6179C917E8D68CE6B9C470494B0` after build/export.
