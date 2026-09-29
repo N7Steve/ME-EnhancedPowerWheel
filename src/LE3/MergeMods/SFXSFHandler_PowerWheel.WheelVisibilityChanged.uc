@@ -47,17 +47,10 @@ public event function WheelVisibilityChanged(bool bVisible)
         {
             m_pPlayerController.GenerateTutorialEvent(9);
         }
-        // Keep native icons ready for the next opening; the map lives in plot ints.
+        // The next opening rebuilds its icons from the current save.
         if (bHadOrderState)
         {
             m_aPowerIconInfo[0].Id = "";
-            for (nIcon = 0; nIcon < m_oPowerIndices.aPlayer.Length; ++nIcon)
-            {
-                m_aPowerIcons[m_oPowerIndices.aPlayer[nIcon]].ClearIcon();
-                m_aPowerIcons[m_oPowerIndices.aPlayer[nIcon]].pPower = None;
-                m_aPowerIcons[m_oPowerIndices.aPlayer[nIcon]].pPawn = None;
-            }
-            SetupPlayerPowers();
         }
     }
     else

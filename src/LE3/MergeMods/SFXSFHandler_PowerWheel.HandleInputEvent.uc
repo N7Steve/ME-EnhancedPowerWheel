@@ -270,7 +270,8 @@ public event function bool HandleInputEvent(BioGuiEvents Event, optional float f
             m_aPowerIcons[nIcon].nCooldownValue = aCooldowns[nSourceSlot];
             m_aPowerIcons[nIcon].bMapped = aMapped[nSourceSlot];
             m_aPowerIcons[nIcon].oMappedIcon.eIcon = aMapIcons[nSourceSlot];
-            if (aStates[nSourceSlot] == SFXPowerWheelPowerState.PWPS_Selected)
+            // Native setup can leave the prior page's empty visual state on an occupied source.
+            if (aStates[nSourceSlot] == SFXPowerWheelPowerState.PWPS_Selected || aStates[nSourceSlot] == SFXPowerWheelPowerState.PWPS_EmptySelectable || aStates[nSourceSlot] == SFXPowerWheelPowerState.PWPS_EmptySelected)
             {
                 m_aPowerIcons[nIcon].eDesiredState = SFXPowerWheelPowerState.PWPS_Selectable;
                 m_aPowerIcons[nIcon].SetState(SFXPowerWheelPowerState.PWPS_Selectable, TRUE);
@@ -278,6 +279,10 @@ public event function bool HandleInputEvent(BioGuiEvents Event, optional float f
             else
             {
                 m_aPowerIcons[nIcon].eDesiredState = aDesiredStates[nSourceSlot];
+                if (m_aPowerIcons[nIcon].eDesiredState == SFXPowerWheelPowerState.PWPS_EmptySelectable || m_aPowerIcons[nIcon].eDesiredState == SFXPowerWheelPowerState.PWPS_EmptySelected)
+                {
+                    m_aPowerIcons[nIcon].eDesiredState = aStates[nSourceSlot];
+                }
                 m_aPowerIcons[nIcon].SetState(aStates[nSourceSlot], TRUE);
             }
         }
