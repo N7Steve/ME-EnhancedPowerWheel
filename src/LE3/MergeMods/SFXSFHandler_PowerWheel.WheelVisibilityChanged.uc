@@ -5,6 +5,17 @@ public event function WheelVisibilityChanged(bool bVisible)
     local bool bWeaponWheel;
     local bool bHadOrderState;
     local GFxValue oWheel;
+    local ASDisplayInfo oDisplay;
+
+    // A close during a page fade must not leave the shared wheel clip transparent.
+    oWheel = GetVariableObject(m_sWheelInnerPath);
+    if (oWheel != None)
+    {
+        oDisplay = oWheel.GetDisplayInfo();
+        oDisplay.hasAlpha = TRUE;
+        oDisplay.Alpha = 100.0;
+        oWheel.SetDisplayInfo(oDisplay);
+    }
 
     if (!bVisible)
     {

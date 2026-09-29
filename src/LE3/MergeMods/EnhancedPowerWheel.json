@@ -5,6 +5,12 @@
       "filename": "SFXGame.pcc",
       "changes": [
         {
+          "entryname": "SFXSFHandler_PowerWheel",
+          "addtoclassorreplace": {
+            "scriptfilenames": ["SFXSFHandler_PowerWheel.Update.uc"]
+          }
+        },
+        {
           "entryname": "SFXSFHandler_PowerWheel.HandleInputEvent",
           "scriptupdate": {
             "scriptfilename": "SFXSFHandler_PowerWheel.HandleInputEvent.uc"
@@ -26,12 +32,6 @@
           "entryname": "SFXSFHandler_PowerWheel.HoverPowerIcon",
           "scriptupdate": {
             "scriptfilename": "SFXSFHandler_PowerWheel.HoverPowerIcon.uc"
-          }
-        },
-        {
-          "entryname": "SFXSFHandler_PowerWheel",
-          "addtoclassorreplace": {
-            "scriptfilenames": ["SFXSFHandler_PowerWheel.Update.uc"]
           }
         }
       ]

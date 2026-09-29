@@ -12,6 +12,7 @@ public event function bool HandleInputEvent(BioGuiEvents Event, optional float f
     local int nSeen;
     local bool bValidMap;
     local bool bRefreshPage;
+    local bool bFadePage;
     local BioGlobalVariableTable oPlot;
     local string sState;
     local string sMap;
@@ -85,6 +86,13 @@ public event function bool HandleInputEvent(BioGuiEvents Event, optional float f
     sSelected = Mid(sState, 16, 1);
     nPage = int(Mid(sState, 17, 1));
 
+    // Ignore wheel input until the page fade has finished.
+    // Negative thumb input is reserved for the redraw at the fade midpoint.
+    if (Len(sState) > 18 && !(fValue < 0.0 && (Event == BioGuiEvents.BIOGUI_EVENT_BUTTON_RTHUMB || Event == BioGuiEvents.BIOGUI_EVENT_BUTTON_LTHUMB)))
+    {
+        return TRUE;
+    }
+
     switch (Event)
     {
         case BioGuiEvents.BIOGUI_EVENT_AXIS_LSTICK_X:
@@ -96,10 +104,11 @@ public event function bool HandleInputEvent(BioGuiEvents Event, optional float f
         case BioGuiEvents.BIOGUI_EVENT_BUTTON_RTHUMB:
             if (m_ePowerWheelMode == SFXPowerWheelMode.PWM_Powers)
             {
-                if (nPage == 0)
+                if (nPage == 0 || fValue < 0.0)
                 {
                     nPage = 1;
-                    bRefreshPage = TRUE;
+                    bRefreshPage = fValue < 0.0;
+                    bFadePage = !bRefreshPage;
                 }
                 break;
             }
@@ -110,7 +119,8 @@ public event function bool HandleInputEvent(BioGuiEvents Event, optional float f
                 if (nPage == 1 || fValue < 0.0)
                 {
                     nPage = 0;
-                    bRefreshPage = TRUE;
+                    bRefreshPage = fValue < 0.0;
+                    bFadePage = !bRefreshPage;
                 }
                 break;
             }
@@ -207,6 +217,10 @@ public event function bool HandleInputEvent(BioGuiEvents Event, optional float f
     if (m_ePowerWheelMode == SFXPowerWheelMode.PWM_Powers && m_aPowerIconInfo.Length > 0)
     {
         m_aPowerIconInfo[0].Id = sMap $ sSelected $ string(nPage);
+        if (bFadePage)
+        {
+            m_aPowerIconInfo[0].Id $= "O";
+        }
     }
     if (!bRefreshPage)
     {
