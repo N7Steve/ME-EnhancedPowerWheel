@@ -39,6 +39,7 @@ static int Run(string[] args)
         Directory.CreateDirectory(args[3]);
         var errors = 0;
         var results = new List<object>();
+        var changedClasses = new HashSet<int>();
         foreach (var file in manifest.RootElement.GetProperty("files").EnumerateArray())
         {
             if (file.GetProperty("filename").GetString() != Path.GetFileName(args[1]))
@@ -46,8 +47,23 @@ static int Run(string[] args)
             foreach (var change in file.GetProperty("changes").EnumerateArray())
             {
                 var name = change.GetProperty("entryname").GetString()!;
-                if (change.TryGetProperty("addtoclassorreplace", out _))
-                    throw new NotSupportedException("This project only validates existing function replacements; class additions are outside the POC.");
+                if (change.TryGetProperty("addtoclassorreplace", out var classUpdate))
+                {
+                    var classExport = target.Exports.Single(e => e.InstancedFullPath == name && e.IsClass);
+                    foreach (var script in classUpdate.GetProperty("scriptfilenames").EnumerateArray())
+                    {
+                        var memberName = script.GetString()!;
+                        if (Path.GetFileName(memberName) != memberName) throw new InvalidOperationException("Script must be beside its manifest.");
+                        var memberSource = File.ReadAllText(Path.Combine(Path.GetDirectoryName(manifestPath)!, memberName));
+                        var memberLog = UnrealScriptCompiler.AddOrReplaceInClass(classExport, memberSource, symbols, usop);
+                        var memberSuccess = !memberLog.HasErrors && !memberLog.HasLexErrors;
+                        if (!memberSuccess) errors++;
+                        Console.WriteLine($"{name} + {memberName}: {(memberSuccess ? "PASS" : "FAIL")} {memberLog}");
+                        results.Add(new { export = name, member = memberName, success = memberSuccess, log = memberLog.ToString() });
+                    }
+                    changedClasses.Add(classExport.UIndex);
+                    continue;
+                }
                 var scriptName = change.GetProperty("scriptupdate").GetProperty("scriptfilename").GetString()!;
                 if (Path.GetFileName(scriptName) != scriptName) throw new InvalidOperationException("Script must be beside its manifest.");
                 var source = File.ReadAllText(Path.Combine(Path.GetDirectoryName(manifestPath)!, scriptName));
@@ -66,9 +82,9 @@ static int Run(string[] args)
             }
         }
         foreach (var (index, fingerprint) in classData)
-            if (!SHA256.HashData(target.GetUExport(index).Data).SequenceEqual(fingerprint))
+            if (!changedClasses.Contains(index) && !SHA256.HashData(target.GetUExport(index).Data).SequenceEqual(fingerprint))
                 throw new InvalidOperationException($"Class export changed during function compilation: {target.GetUExport(index).InstancedFullPath}");
-        Console.WriteLine("PASS: all class export data unchanged after function compilation.");
+        Console.WriteLine("PASS: only classes explicitly listed for member addition changed class export data.");
         File.WriteAllText(Path.Combine(args[3], "validation.json"), JsonSerializer.Serialize(results, new JsonSerializerOptions { WriteIndented = true }));
         return errors == 0 ? 0 : 1;
     }

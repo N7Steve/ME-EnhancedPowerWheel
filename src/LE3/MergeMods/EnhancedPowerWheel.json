@@ -27,6 +27,12 @@
           "scriptupdate": {
             "scriptfilename": "SFXSFHandler_PowerWheel.HoverPowerIcon.uc"
           }
+        },
+        {
+          "entryname": "SFXSFHandler_PowerWheel",
+          "addtoclassorreplace": {
+            "scriptfilenames": ["SFXSFHandler_PowerWheel.Update.uc"]
+          }
         }
       ]
     }

@@ -33,8 +33,10 @@ public event function bool HandleInputEvent(BioGuiEvents Event, optional float f
 
     // 16 source-slot characters, one selected-slot character, one page.
     // Plot ints 740200-740204 persist the map in each save game.
-    if (m_ePowerWheelMode == SFXPowerWheelMode.PWM_Powers && m_aPowerIconInfo.Length > 0 && m_aPowerIconInfo[0].Id == "")
+    if (m_ePowerWheelMode == SFXPowerWheelMode.PWM_Powers && m_aPowerIconInfo.Length > 0 && (m_aPowerIconInfo[0].Id == "" || m_aPowerIconInfo[0].Id == "P"))
     {
+        // P requests a redraw after native opening has finished on the next update.
+        bRefreshPage = m_aPowerIconInfo[0].Id == "P";
         sMap = "01234567--------";
         oPlot = BioWorldInfo(oWorldInfo).GetGlobalVariables();
         if (oPlot != None && oPlot.GetInt(740200) == 2)
