@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PlatformTarget>x64</PlatformTarget>
+    <LegendaryExplorerSource Condition="'$(LegendaryExplorerSource)' == ''">$(LEC_SOURCE)</LegendaryExplorerSource>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="$(LegendaryExplorerSource)/LegendaryExplorer/LegendaryExplorerCore/LegendaryExplorerCore.csproj" />
+  </ItemGroup>
+  <Target Name="CheckCoreSource" BeforeTargets="PrepareForBuild">
+    <Error Condition="!Exists('$(LegendaryExplorerSource)/LegendaryExplorer/LegendaryExplorerCore/LegendaryExplorerCore.csproj')" Text="Set LEC_SOURCE or -p:LegendaryExplorerSource to the pinned LegendaryExplorer source checkout. See docs/research/toolchain.md." />
+  </Target>
+</Project>

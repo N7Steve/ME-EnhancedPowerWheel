@@ -6,6 +6,7 @@ dist/
 artifacts/
 tmp/
 .env
+local.settings.ps1
 *.local.json
 
 # Game and extracted assets
