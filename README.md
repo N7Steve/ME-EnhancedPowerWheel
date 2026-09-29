@@ -2,24 +2,26 @@
 
 Enhanced Power Wheel is an experimental mod project for the Power Wheel in Mass Effect Legendary Edition. Development starts with LE3. Longer term, the project aims to improve power capacity, ordering, navigation, and the information shown on the wheel.
 
-## First experiment
+## LE3 checkpoint: two-page ordering wheel
 
-The initial proof of concept has two pages while the Power Wheel stays open:
+The current LE3 proof of concept has two pages while the Power Wheel stays open:
 
-- Page 0 shows the vanilla powers and behavior.
+- Page 0 shows the saved player-power arrangement immediately on opening.
 - R3 (right stick click) advances to page 1.
 - L3 (left stick click) returns to page 0.
 - Input at either page boundary does nothing; closing and reopening starts on page 0.
+- Page 1 provides eight selectable player slots and hides squad power icons.
+- LT on a player power selects it; LT on another slot moves it there or swaps it with the power already there.
 
-The initial empty-page experiment worked in game, as reported by the project owner. The current **ordering experiment** renders eight player slots on page 1. Press LT on a player power, then LT on a destination slot on either page to move it; occupied destinations swap. Ordering is temporary for that wheel opening. This newer experiment compiles but still needs gameplay testing. No increased power count or mod compatibility is claimed.
+The project owner confirmed this behavior in game, including the personalized first page on RB, page switching, immediate icon rendering, and LT moves. The arrangement is written to the current game's plot variables and reloaded when the wheel opens; it reaches disk with the next game save. Save/quit/reload behavior has not been separately confirmed by the owner. This POC does not increase the number of powers or establish compatibility with other mods.
 
 ## Development
 
-Prerequisites: a local LE3 installation, the pinned LegendaryExplorer source checkout, .NET SDK 10.0.401 and .NET 8 runtime, PowerShell, and ME3Tweaks Mod Manager 9.2.1.137. Copy `local.settings.example.ps1` to ignored `local.settings.ps1`, set verified local paths, then dot-source it. Run `scripts/Build-ResearchTool.ps1`, `scripts/Inspect-Le3.ps1`, `scripts/Build-Le3.ps1`, and `scripts/Export-Le3Folder.ps1`. The build validates UnrealScript and creates `build/LE3/MergeMods/EnhancedPowerWheel.m3m`; export creates an import folder under `dist/`. Neither command installs anything. See [toolchain research](docs/research/toolchain.md) and [POC plan](docs/architecture/pagination-poc.md).
+Prerequisites: a local LE3 installation, the pinned LegendaryExplorer source checkout, .NET SDK 10.0.401 and .NET 8 runtime, PowerShell, and ME3Tweaks Mod Manager 9.2.1.137. Copy `local.settings.example.ps1` to ignored `local.settings.ps1`, set verified local paths, then dot-source it. Run `scripts/Build-ResearchTool.ps1`, `scripts/Inspect-Le3.ps1`, `scripts/Build-Le3.ps1`, and `scripts/Export-Le3Folder.ps1`. The build validates four function replacements and the wheel's `Update` override, then creates `build/LE3/MergeMods/EnhancedPowerWheel.m3m`; export creates an import folder under `dist/`. Neither command installs anything. See [toolchain research](docs/research/toolchain.md) and [ordering implementation](docs/architecture/ordering-poc.md).
 
 ## Status
 
-Repository setup and static LE3 investigation are complete. The original empty-page pagination works in game. The LT move/swap iteration is built but untested. See [ordering POC](docs/architecture/ordering-poc.md) and [LE3 findings](docs/research/le3-power-wheel.md).
+Version 0.7 is the first owner-confirmed ordering checkpoint. Its merge artifact has SHA256 `43BE9E7783774FDD70D812712882A5D2291AB3422B4BD287C3F17B185C722991`. The Git tag `checkpoint/le3-ordering-v0.7` marks the source and documentation baseline. See [ordering POC](docs/architecture/ordering-poc.md) and [LE3 findings](docs/research/le3-power-wheel.md).
 
 ## Rights
 

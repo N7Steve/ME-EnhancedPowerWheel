@@ -34,4 +34,4 @@ If page 1 slots do not receive controller hover, trace native radial selection b
 
 ## Status
 
-The user confirmed that page 1 and the personalized page 0 render immediately without hover, but opening still shows the vanilla arrangement until R3/L3. Moving the refresh within `WheelVisibilityChanged` did not solve it. This revision defers the initial refresh to the following `Update` callback. It has not yet been tested in game. Persistence reaches disk when the game itself saves; unsaved changes are not expected to survive quitting or loading an older save.
+The project owner confirmed version 0.7 works in game. The first RB opening shows the personalized page 0, and page 1 plus the return to page 0 render immediately without hover. LT movement and reordering work. This is the `checkpoint/le3-ordering-v0.7` baseline. Persistence reaches disk when the game itself saves; a save/quit/reload test has not been explicitly reported, and unsaved changes are not expected to survive quitting or loading an older save.
