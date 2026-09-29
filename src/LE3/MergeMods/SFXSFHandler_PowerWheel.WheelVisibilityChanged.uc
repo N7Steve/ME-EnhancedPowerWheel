@@ -5,16 +5,35 @@ public event function WheelVisibilityChanged(bool bVisible)
     local bool bWeaponWheel;
     local bool bHadOrderState;
     local GFxValue oWheel;
+    local SFXGUIValue_PowerIcon oIcon;
+    local GFxValue oMapped;
     local ASDisplayInfo oDisplay;
 
-    // A close during a page fade must not leave the shared wheel clip transparent.
-    oWheel = GetVariableObject(m_sWheelInnerPath);
-    if (oWheel != None)
+    // A close during a page fade must not leave any power clip transparent.
+    for (nIcon = 0; nIcon < m_aPowerIcons.Length; ++nIcon)
     {
-        oDisplay = oWheel.GetDisplayInfo();
+        oIcon = m_aPowerIcons[nIcon];
+        oDisplay = oIcon.GetDisplayInfo();
         oDisplay.hasAlpha = TRUE;
         oDisplay.Alpha = 100.0;
-        oWheel.SetDisplayInfo(oDisplay);
+        oIcon.SetDisplayInfo(oDisplay);
+
+        oMapped = GetVariableObject(oIcon.oMappedIcon.sPath);
+        if (oMapped != None)
+        {
+            oDisplay = oMapped.GetDisplayInfo();
+            oDisplay.hasAlpha = TRUE;
+            oDisplay.Alpha = 100.0;
+            oMapped.SetDisplayInfo(oDisplay);
+        }
+        oMapped = GetVariableObject(oIcon.sMappedBGPath);
+        if (oMapped != None)
+        {
+            oDisplay = oMapped.GetDisplayInfo();
+            oDisplay.hasAlpha = TRUE;
+            oDisplay.Alpha = 100.0;
+            oMapped.SetDisplayInfo(oDisplay);
+        }
     }
 
     if (!bVisible)

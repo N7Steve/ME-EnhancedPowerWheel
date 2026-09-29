@@ -17,4 +17,4 @@ The Merge Mod adds no class fields and changes no quickslots. The manifest now a
 
 ## Gameplay validation needed
 
-The animation's visual result is a hypothesis until tested in LE3. Confirm that R3/L3 show a smooth fade with the correct powers and empty slots after each transition, including rapid repeated presses, LT immediately afterward, and closing/reopening mid-fade. Check cooldowns, hover, activation, and squad icons. The authored SWF may animate or reset the clip's alpha independently of UnrealScript; if so, this script-only approach may need a different GFx target or be reverted to 0.7.
+The owner confirmed that the fade-out/fade-in looks good in game, but the chosen `mainContent.Wheel.Wheel` target also fades a blue screen vignette and character portraits. That scope is broader than desired. Version 0.9 tests a narrower target in [the icon-fade POC](icon-fade-poc.md).

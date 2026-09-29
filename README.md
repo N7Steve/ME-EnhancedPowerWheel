@@ -4,7 +4,7 @@ Enhanced Power Wheel is an experimental mod project for the Power Wheel in Mass 
 
 ## LE3 checkpoint: two-page ordering wheel
 
-Version 0.8 adds a script-driven page-fade POC on top of the owner-confirmed 0.7 ordering checkpoint. It compiles against the current installed LE3 package and has been exported for Mod Manager; its visual behavior still needs an in-game test. See [fade POC](docs/architecture/fade-poc.md).
+Version 0.8's page fade was confirmed in game, but it also fades the vignette and portraits. Version 0.9 limits the fade to power icons and their mapping clips; it compiles against the current installed LE3 package and is exported for Mod Manager, but needs visual validation. See [fade POC](docs/architecture/fade-poc.md) and [icon-fade POC](docs/architecture/icon-fade-poc.md).
 
 The current LE3 proof of concept has two pages while the Power Wheel stays open:
 

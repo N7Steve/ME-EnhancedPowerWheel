@@ -1,10 +1,12 @@
 public event function Update(float fDeltaT)
 {
-    local GFxValue oWheel;
+    local GFxValue oIcon;
+    local GFxValue oMapped;
     local ASDisplayInfo oDisplay;
     local string sState;
     local string sPhase;
     local float fAlpha;
+    local int nIcon;
 
     Super.Update(fDeltaT);
     if (m_ePowerWheelMode == SFXPowerWheelMode.PWM_Powers && m_aPowerIconInfo.Length > 0 && m_aPowerIconInfo[0].Id == "P")
@@ -26,10 +28,13 @@ public event function Update(float fDeltaT)
         return;
     }
 
-    oWheel = GetVariableObject(m_sWheelInnerPath);
-    if (oWheel == None)
+    if (m_aPowerIcons.Length > 0)
     {
-        // If the authored clip is missing, keep page switching functional.
+        oIcon = m_aPowerIcons[0];
+    }
+    if (oIcon == None)
+    {
+        // If the authored icons are missing, keep page switching functional.
         if (sPhase == "O")
         {
             if (Mid(sState, 17, 1) == "1")
@@ -45,16 +50,14 @@ public event function Update(float fDeltaT)
         return;
     }
 
-    oDisplay = oWheel.GetDisplayInfo();
-    oDisplay.hasAlpha = TRUE;
+    oDisplay = oIcon.GetDisplayInfo();
     fAlpha = oDisplay.Alpha;
     if (sPhase == "O")
     {
         fAlpha -= fDeltaT * 600.0;
         if (fAlpha <= 0.0)
         {
-            oDisplay.Alpha = 0.0;
-            oWheel.SetDisplayInfo(oDisplay);
+            fAlpha = 0.0;
             if (Mid(sState, 17, 1) == "1")
             {
                 HandleInputEvent(BioGuiEvents.BIOGUI_EVENT_BUTTON_RTHUMB, -1.0);
@@ -64,7 +67,6 @@ public event function Update(float fDeltaT)
                 HandleInputEvent(BioGuiEvents.BIOGUI_EVENT_BUTTON_LTHUMB, -1.0);
             }
             m_aPowerIconInfo[0].Id $= "I";
-            return;
         }
     }
     else
@@ -76,6 +78,30 @@ public event function Update(float fDeltaT)
             m_aPowerIconInfo[0].Id = Left(sState, 18);
         }
     }
-    oDisplay.Alpha = fAlpha;
-    oWheel.SetDisplayInfo(oDisplay);
+    // The inner wheel clip also contains portraits and the screen overlay.
+    // Fade only the power icons and their separate mapping clips.
+    for (nIcon = 0; nIcon < m_aPowerIcons.Length; ++nIcon)
+    {
+        oDisplay = m_aPowerIcons[nIcon].GetDisplayInfo();
+        oDisplay.hasAlpha = TRUE;
+        oDisplay.Alpha = fAlpha;
+        m_aPowerIcons[nIcon].SetDisplayInfo(oDisplay);
+
+        oMapped = GetVariableObject(m_aPowerIcons[nIcon].oMappedIcon.sPath);
+        if (oMapped != None)
+        {
+            oDisplay = oMapped.GetDisplayInfo();
+            oDisplay.hasAlpha = TRUE;
+            oDisplay.Alpha = fAlpha;
+            oMapped.SetDisplayInfo(oDisplay);
+        }
+        oMapped = GetVariableObject(m_aPowerIcons[nIcon].sMappedBGPath);
+        if (oMapped != None)
+        {
+            oDisplay = oMapped.GetDisplayInfo();
+            oDisplay.hasAlpha = TRUE;
+            oDisplay.Alpha = fAlpha;
+            oMapped.SetDisplayInfo(oDisplay);
+        }
+    }
 }
