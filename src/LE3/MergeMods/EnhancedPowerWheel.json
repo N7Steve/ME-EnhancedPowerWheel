@@ -1,0 +1,28 @@
+{
+  "game": "LE3",
+  "files": [
+    {
+      "filename": "SFXGame.pcc",
+      "changes": [
+        {
+          "entryname": "SFXSFHandler_PowerWheel.HandleInputEvent",
+          "scriptupdate": {
+            "scriptfilename": "SFXSFHandler_PowerWheel.HandleInputEvent.uc"
+          }
+        },
+        {
+          "entryname": "SFXSFHandler_PowerWheel.SelectCurrentWheelItem",
+          "scriptupdate": {
+            "scriptfilename": "SFXSFHandler_PowerWheel.SelectCurrentWheelItem.uc"
+          }
+        },
+        {
+          "entryname": "SFXSFHandler_PowerWheel.WheelVisibilityChanged",
+          "scriptupdate": {
+            "scriptfilename": "SFXSFHandler_PowerWheel.WheelVisibilityChanged.uc"
+          }
+        }
+      ]
+    }
+  ]
+}

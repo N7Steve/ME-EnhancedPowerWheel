@@ -11,15 +11,15 @@ The initial proof of concept has two pages while the Power Wheel stays open:
 - L3 (left stick click) returns to page 0.
 - Input at either page boundary does nothing; closing and reopening starts on page 0.
 
-This behavior is a target, **not yet an implemented or tested feature**. The first engineering question is whether LE3 can change the displayed power entries in place using UnrealScript and a Merge Mod. No increased power count or mod compatibility is claimed.
+This behavior now has a **compiled Merge Mod experiment**, but it has not been deployed or tested in game. No increased power count or mod compatibility is claimed.
 
 ## Development
 
-Prerequisites under investigation: a local LE3 installation, LegendaryExplorer tools, and ME3Tweaks Mod Manager. Research must read the installed game without changing it. Set `MELE_ROOT` to the Legendary Edition installation root for local scripts; do not commit local paths or game assets. See [toolchain research](docs/research/toolchain.md) and [POC plan](docs/architecture/pagination-poc.md).
+Prerequisites: a local LE3 installation, the pinned LegendaryExplorer source checkout, .NET SDK 10.0.401 and .NET 8 runtime, PowerShell, and ME3Tweaks Mod Manager 9.2.1.137. Copy `local.settings.example.ps1` to ignored `local.settings.ps1`, set verified local paths, then dot-source it. Run `scripts/Build-ResearchTool.ps1`, `scripts/Inspect-Le3.ps1`, `scripts/Build-Le3.ps1`, and `scripts/Export-Le3Folder.ps1`. The build validates UnrealScript and creates `build/LE3/MergeMods/EnhancedPowerWheel.m3m`; export creates an import folder under `dist/`. Neither command installs anything. See [toolchain research](docs/research/toolchain.md) and [POC plan](docs/architecture/pagination-poc.md).
 
 ## Status
 
-Repository setup is complete. LE3 package, controller input, and Scaleform investigation are in progress. There is no installable mod yet.
+Repository setup and static LE3 investigation are complete. The source and compiled experiment need a clean, restorable LE3 test target and gameplay validation. See [current findings](docs/research/le3-power-wheel.md).
 
 ## Rights
 
