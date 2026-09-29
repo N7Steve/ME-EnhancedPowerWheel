@@ -1,0 +1,33 @@
+# Local tools and reverse-engineering output
+.tools/
+research/local/
+build/
+dist/
+artifacts/
+tmp/
+.env
+*.local.json
+
+# Game and extracted assets
+*.pcc
+*.upk
+*.tfc
+*.afc
+*.tlk
+*.sfm
+*.swf
+*.m3m
+*.7z
+*.zip
+*.rar
+*.sav
+
+# .NET / IDE
+bin/
+obj/
+.vs/
+*.user
+
+# Python
+__pycache__/
+*.pyc
