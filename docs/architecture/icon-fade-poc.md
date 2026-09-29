@@ -13,6 +13,6 @@ Version 0.9 keeps the 0.8 page state and timing, but applies alpha only to `m_aP
 - Export: `dist/EnhancedPowerWheel-LE3-IconFade-POC-9A94945FCD70/`, containing only `moddesc.ini` and `MergeMods/EnhancedPowerWheel.m3m`. Build and export did not install the mod.
 - If installed through Mod Manager, the merge targets `Game/ME3/BioGame/CookedPCConsole/SFXGame.pcc`. Use Mod Manager's basegame backup/restore workflow to revert that file and reapply desired mods; do not manually replace the PCC.
 
-## Gameplay validation needed
+## Gameplay result and remaining checks
 
-The visual scope of the new fade is unverified. Check that R3/L3 fade the powers and their mapping markers while the vignette and portraits remain steady. Confirm the wheel ring staying visible looks intentional, squad powers disappear and return correctly, occupied and empty player slots redraw without hover, and closing/reopening mid-fade restores full opacity. Also check rapid repeated presses, cooldowns, activation, and LT ordering. If the icon-only fade is visually unsatisfactory, the 0.8 export remains available for comparison while another target or a partial-opacity transition is explored.
+The owner confirmed version 0.9 works in game and that the icon-only fade resolves the unwanted vignette and portrait fade. This is the preferred visual checkpoint. Separate results were not reported for closing mid-fade, rapid repeated presses, save/quit/reload, or interactions with other mods that edit the wheel handler; those remain open compatibility and edge-case checks. The 0.8 source remains at commit `4780853` if a comparison build is needed.
