@@ -10,9 +10,17 @@ public event function bool HandleInputEvent(BioGuiEvents Event, optional float f
     local int nPacked;
     local int nValue;
     local int nSeen;
+    local int nPower;
+    local int nFound;
+    local int nKey;
+    local array<SFXPowerCustomActionBase> aAvailablePowers;
+    local array<SFXPowerCustomActionBase> aOriginalPowers;
+    local array<int> aOriginalIndices;
     local bool bValidMap;
     local bool bRefreshPage;
     local bool bFadePage;
+    local bool bPreserveHover;
+    local bool bPageRedraw;
     local BioGlobalVariableTable oPlot;
     local string sState;
     local string sMap;
@@ -27,19 +35,31 @@ public event function bool HandleInputEvent(BioGuiEvents Event, optional float f
     local array<string> aResources;
     local array<int> aIconIds;
     local array<int> aCooldowns;
-    local array<bool> aMapped;
     local array<SFXPowerWheelPowerState> aStates;
     local array<SFXPowerWheelPowerState> aDesiredStates;
-    local array<SFXPowerWheelMapButtonIcon> aMapIcons;
 
-    // 16 source-slot characters, one selected-slot character, one page.
-    // Plot ints 740200-740204 persist the map in each save game.
+    // 16 source characters (0-F, dash empty), selection and page.
+    // Version 3 also stores a power identity for each occupied save slot.
     if (m_ePowerWheelMode == SFXPowerWheelMode.PWM_Powers && m_aPowerIconInfo.Length > 0 && (m_aPowerIconInfo[0].Id == "" || m_aPowerIconInfo[0].Id == "P"))
     {
         // P requests a redraw after native opening has finished on the next update.
         bRefreshPage = m_aPowerIconInfo[0].Id == "P";
-        sMap = "01234567--------";
+        EPWPlayerPowers(aAvailablePowers);
+        sMap = "----------------";
         oPlot = BioWorldInfo(oWorldInfo).GetGlobalVariables();
+        if (aAvailablePowers.Length <= 8 && (oPlot == None || (oPlot.GetInt(740200) != 2 && oPlot.GetInt(740200) != 3)))
+        {
+            SetupPlayerPowers();
+            for (nSlot = 0; nSlot < 8; ++nSlot)
+            {
+                nIcon = m_oPowerIndices.aPlayer[nSlot];
+                nPower = aAvailablePowers.Find(m_aPowerIcons[nIcon].pPower);
+                if (nPower >= 0 && InStr(sMap, Mid("0123456789ABCDEF", nPower, 1)) < 0)
+                {
+                    sMap = Left(sMap, nSlot) $ Mid("0123456789ABCDEF", nPower, 1) $ Mid(sMap, nSlot + 1);
+                }
+            }
+        }
         if (oPlot != None && oPlot.GetInt(740200) == 2)
         {
             sState = "";
@@ -76,9 +96,53 @@ public event function bool HandleInputEvent(BioGuiEvents Event, optional float f
             }
             if (bValidMap && nSeen == 255)
             {
-                sMap = sState;
+                SetupPlayerPowers();
+                for (nSlot = 0; nSlot < 16; ++nSlot)
+                {
+                    nSourceSlot = InStr("01234567", Mid(sState, nSlot, 1));
+                    if (nSourceSlot >= 0)
+                    {
+                        nIcon = m_oPowerIndices.aPlayer[nSourceSlot];
+                        nPower = aAvailablePowers.Find(m_aPowerIcons[nIcon].pPower);
+                        if (nPower >= 0 && InStr(sMap, Mid("0123456789ABCDEF", nPower, 1)) < 0)
+                        {
+                            sMap = Left(sMap, nSlot) $ Mid("0123456789ABCDEF", nPower, 1) $ Mid(sMap, nSlot + 1);
+                        }
+                    }
+                }
             }
         }
+        if (oPlot != None && oPlot.GetInt(740200) == 3)
+        {
+            for (nSlot = 0; nSlot < 16; ++nSlot)
+            {
+                nKey = oPlot.GetInt(740210 + nSlot);
+                if (nKey == 0)
+                {
+                    continue;
+                }
+                for (nPower = 0; nPower < aAvailablePowers.Length; ++nPower)
+                {
+                    sSource = Mid("0123456789ABCDEF", nPower, 1);
+                    if (EPWPowerKey(aAvailablePowers[nPower]) == nKey && InStr(sMap, sSource) < 0)
+                    {
+                        sMap = Left(sMap, nSlot) $ sSource $ Mid(sMap, nSlot + 1);
+                        break;
+                    }
+                }
+            }
+        }
+        // Existing identities keep their slots; new powers take the first hole.
+        for (nPower = 0; nPower < aAvailablePowers.Length; ++nPower)
+        {
+            sSource = Mid("0123456789ABCDEF", nPower, 1);
+            nSlot = InStr(sMap, "-");
+            if (InStr(sMap, sSource) < 0 && nSlot >= 0)
+            {
+                sMap = Left(sMap, nSlot) $ sSource $ Mid(sMap, nSlot + 1);
+            }
+        }
+        EPWSaveMap(sMap, aAvailablePowers);
         m_aPowerIconInfo[0].Id = sMap $ "X0";
     }
     sState = m_aPowerIconInfo[0].Id;
@@ -88,6 +152,18 @@ public event function bool HandleInputEvent(BioGuiEvents Event, optional float f
 
     // Ignore wheel input until the page fade has finished.
     // Negative thumb input is reserved for the redraw at the fade midpoint.
+    if (Len(sState) > 18 && (Event == BioGuiEvents.BIOGUI_EVENT_AXIS_LSTICK_X || Event == BioGuiEvents.BIOGUI_EVENT_AXIS_LSTICK_Y))
+    {
+        if (Event == BioGuiEvents.BIOGUI_EVENT_AXIS_LSTICK_X)
+        {
+            m_vLStickInput.X = fValue;
+        }
+        else
+        {
+            m_vLStickInput.Y = fValue;
+        }
+        return TRUE;
+    }
     if (Len(sState) > 18 && !(fValue < 0.0 && (Event == BioGuiEvents.BIOGUI_EVENT_BUTTON_RTHUMB || Event == BioGuiEvents.BIOGUI_EVENT_BUTTON_LTHUMB)))
     {
         return TRUE;
@@ -104,11 +180,18 @@ public event function bool HandleInputEvent(BioGuiEvents Event, optional float f
         case BioGuiEvents.BIOGUI_EVENT_BUTTON_RTHUMB:
             if (m_ePowerWheelMode == SFXPowerWheelMode.PWM_Powers)
             {
-                if (nPage == 0 || fValue < 0.0)
+                if (fValue < 0.0)
                 {
-                    nPage = 1;
-                    bRefreshPage = fValue < 0.0;
-                    bFadePage = !bRefreshPage;
+                    // Internal redraw keeps the target page already in sState.
+                    bRefreshPage = TRUE;
+                    bPageRedraw = Len(sState) > 18;
+                    bPreserveHover = bPageRedraw && m_oPowerIndices.aPlayer.Find(m_nCurrentPowerIconIndex) >= 0;
+                }
+                else
+                {
+                    nPage = 1 - nPage;
+                    bFadePage = TRUE;
+                    PlayGuiSound('BrowserSegmentChange');
                 }
                 break;
             }
@@ -116,16 +199,17 @@ public event function bool HandleInputEvent(BioGuiEvents Event, optional float f
         case BioGuiEvents.BIOGUI_EVENT_BUTTON_LTHUMB:
             if (m_ePowerWheelMode == SFXPowerWheelMode.PWM_Powers)
             {
-                if (nPage == 1 || fValue < 0.0)
+                if (fValue < 0.0)
                 {
-                    nPage = 0;
-                    bRefreshPage = fValue < 0.0;
-                    bFadePage = !bRefreshPage;
+                    // Retained only for the first-open and fade redraw calls.
+                    bRefreshPage = TRUE;
+                    bPageRedraw = Len(sState) > 18;
+                    bPreserveHover = bPageRedraw && m_oPowerIndices.aPlayer.Find(m_nCurrentPowerIconIndex) >= 0;
                 }
                 break;
             }
             return Super(SFXGUIMovie).HandleInputEvent(Event, fValue);
-        case BioGuiEvents.BIOGUI_EVENT_BUTTON_LT:
+        case BioGuiEvents.BIOGUI_EVENT_BUTTON_LB:
             if (m_ePowerWheelMode == SFXPowerWheelMode.PWM_Powers)
             {
                 nSlot = m_oPowerIndices.aPlayer.Find(m_nCurrentPowerIconIndex);
@@ -138,7 +222,7 @@ public event function bool HandleInputEvent(BioGuiEvents Event, optional float f
                         if (m_aPowerIcons[m_nCurrentPowerIconIndex].pPower != None)
                         {
                             sSelected = Mid("ABCDEFGHIJKLMNOP", nAbsoluteSlot, 1);
-                            PlayGuiSound('HUDPowerWheelChangeHighlightedPower');
+                            PlayGuiSound('HUDPowerWheelQueueingHighlightedPowerForActivation');
                         }
                     }
                     else
@@ -149,28 +233,11 @@ public event function bool HandleInputEvent(BioGuiEvents Event, optional float f
                             sTarget = Mid(sMap, nAbsoluteSlot, 1);
                             sMap = Left(sMap, nSelectedSlot) $ sTarget $ Mid(sMap, nSelectedSlot + 1);
                             sMap = Left(sMap, nAbsoluteSlot) $ sSource $ Mid(sMap, nAbsoluteSlot + 1);
-                            oPlot = BioWorldInfo(oWorldInfo).GetGlobalVariables();
-                            if (oPlot != None)
-                            {
-                                oPlot.SetInt(740200, 0, TRUE);
-                                for (nGroup = 0; nGroup < 4; ++nGroup)
-                                {
-                                    nPacked = 0;
-                                    for (nIcon = 0; nIcon < 4; ++nIcon)
-                                    {
-                                        nPacked = nPacked * 16;
-                                        nValue = InStr("01234567", Mid(sMap, nGroup * 4 + nIcon, 1));
-                                        if (nValue < 0)
-                                        {
-                                            nValue = 15;
-                                        }
-                                        nPacked = nPacked + nValue;
-                                    }
-                                    oPlot.SetInt(740201 + nGroup, nPacked, TRUE);
-                                }
-                                oPlot.SetInt(740200, 2, TRUE);
-                            }
+                            EPWPlayerPowers(aAvailablePowers);
+                            EPWSaveMap(sMap, aAvailablePowers);
                             bRefreshPage = TRUE;
+                            bPreserveHover = TRUE;
+                            PlayGuiSound('HUDPowerWheelQueueingHighlightedPowerForActivation');
                         }
                         sSelected = "X";
                     }
@@ -182,27 +249,27 @@ public event function bool HandleInputEvent(BioGuiEvents Event, optional float f
             SelectCurrentWheelItem(m_ePowerWheelMode);
             break;
         case BioGuiEvents.BIOGUI_EVENT_BUTTON_X:
-            if (m_ePowerWheelMode == SFXPowerWheelMode.PWM_Powers && nPage == 0 && m_nCurrentPowerIconIndex >= 0 && m_aPowerIcons[m_nCurrentPowerIconIndex].eState != SFXPowerWheelPowerState.PWPS_EmptySelectable && m_aPowerIcons[m_nCurrentPowerIconIndex].eState != SFXPowerWheelPowerState.PWPS_EmptySelected)
+            if (m_ePowerWheelMode == SFXPowerWheelMode.PWM_Powers && m_nCurrentPowerIconIndex >= 0 && m_aPowerIcons[m_nCurrentPowerIconIndex].eState != SFXPowerWheelPowerState.PWPS_EmptySelectable && m_aPowerIcons[m_nCurrentPowerIconIndex].eState != SFXPowerWheelPowerState.PWPS_EmptySelected)
             {
                 m_pPlayerController.GenerateTutorialEvent(11);
                 MapCurrentPower(5);
             }
             break;
         case BioGuiEvents.BIOGUI_EVENT_BUTTON_B:
-            if (m_ePowerWheelMode == SFXPowerWheelMode.PWM_Powers && nPage == 0 && m_nCurrentPowerIconIndex >= 0 && m_aPowerIcons[m_nCurrentPowerIconIndex].eState != SFXPowerWheelPowerState.PWPS_EmptySelectable && m_aPowerIcons[m_nCurrentPowerIconIndex].eState != SFXPowerWheelPowerState.PWPS_EmptySelected)
+            if (m_ePowerWheelMode == SFXPowerWheelMode.PWM_Powers && m_nCurrentPowerIconIndex >= 0 && m_aPowerIcons[m_nCurrentPowerIconIndex].eState != SFXPowerWheelPowerState.PWPS_EmptySelectable && m_aPowerIcons[m_nCurrentPowerIconIndex].eState != SFXPowerWheelPowerState.PWPS_EmptySelected)
             {
                 m_pPlayerController.GenerateTutorialEvent(11);
                 MapCurrentPower(6);
             }
             break;
         case BioGuiEvents.BIOGUI_EVENT_BUTTON_Y:
-            if (m_ePowerWheelMode == SFXPowerWheelMode.PWM_Powers && nPage == 0 && m_nCurrentPowerIconIndex >= 0 && m_aPowerIcons[m_nCurrentPowerIconIndex].eState != SFXPowerWheelPowerState.PWPS_EmptySelectable && m_aPowerIcons[m_nCurrentPowerIconIndex].eState != SFXPowerWheelPowerState.PWPS_EmptySelected)
+            if (m_ePowerWheelMode == SFXPowerWheelMode.PWM_Powers && m_nCurrentPowerIconIndex >= 0 && m_aPowerIcons[m_nCurrentPowerIconIndex].eState != SFXPowerWheelPowerState.PWPS_EmptySelectable && m_aPowerIcons[m_nCurrentPowerIconIndex].eState != SFXPowerWheelPowerState.PWPS_EmptySelected)
             {
                 m_pPlayerController.GenerateTutorialEvent(11);
                 MapCurrentPower(1);
             }
             break;
-        case BioGuiEvents.BIOGUI_EVENT_BUTTON_LT_RELEASE:
+        case BioGuiEvents.BIOGUI_EVENT_BUTTON_LB_RELEASE:
         case BioGuiEvents.BIOGUI_EVENT_BUTTON_LTHUMB_RELEASE:
         case BioGuiEvents.BIOGUI_EVENT_BUTTON_RTHUMB_RELEASE:
             if (m_ePowerWheelMode == SFXPowerWheelMode.PWM_Powers)
@@ -227,7 +294,10 @@ public event function bool HandleInputEvent(BioGuiEvents Event, optional float f
         return TRUE;
     }
 
-    LeavePowerIcon(m_nCurrentPowerIconIndex, TRUE);
+    if (!bPreserveHover)
+    {
+        LeavePowerIcon(m_nCurrentPowerIconIndex, TRUE);
+    }
     for (nSlot = 0; nSlot < 8; ++nSlot)
     {
         nIcon = m_oPowerIndices.aPlayer[nSlot];
@@ -236,12 +306,43 @@ public event function bool HandleInputEvent(BioGuiEvents Event, optional float f
         m_aPowerIcons[nIcon].pPower = None;
         m_aPowerIcons[nIcon].pPawn = None;
     }
-    SetupPlayerPowers();
-    // Capture vanilla data before reusing its eight physical GFx slots.
-    for (nSlot = 0; nSlot < 8; ++nSlot)
+    EPWPlayerPowers(aAvailablePowers);
+    if (m_pShepardPawn == None || m_pShepardPawn.PowerManager == None || m_oPowerIndices.aPlayer.Length < 8)
     {
-        nIcon = m_oPowerIndices.aPlayer[nSlot];
-        aPowers.AddItem(m_aPowerIcons[nIcon].pPower);
+        return TRUE;
+    }
+    // Let native setup initialize each real power, without competing powers.
+    // The manager array and display indices are restored synchronously below.
+    aOriginalPowers = m_pShepardPawn.PowerManager.Powers;
+    for (nPower = 0; nPower < aOriginalPowers.Length; ++nPower)
+    {
+        aOriginalIndices.AddItem(aOriginalPowers[nPower].WheelDisplayIndex);
+    }
+    for (nPower = 0; nPower < aAvailablePowers.Length; ++nPower)
+    {
+        for (nSlot = 0; nSlot < 8; ++nSlot)
+        {
+            nIcon = m_oPowerIndices.aPlayer[nSlot];
+            m_aPowerIcons[nIcon].ClearIcon();
+            m_aPowerIcons[nIcon].pPower = None;
+            m_aPowerIcons[nIcon].pPawn = None;
+        }
+        m_pShepardPawn.PowerManager.Powers.Length = 0;
+        m_pShepardPawn.PowerManager.Powers.AddItem(aAvailablePowers[nPower]);
+        SetupPlayerPowers();
+        nFound = -1;
+        for (nSlot = 0; nSlot < 8; ++nSlot)
+        {
+            nIcon = m_oPowerIndices.aPlayer[nSlot];
+            if (m_aPowerIcons[nIcon].pPower == aAvailablePowers[nPower])
+            {
+                nFound = nIcon;
+                break;
+            }
+        }
+        // If native setup rejects an icon, keep a null source, never another power.
+        nIcon = nFound >= 0 ? nFound : m_oPowerIndices.aPlayer[0];
+        aPowers.AddItem(nFound >= 0 ? m_aPowerIcons[nIcon].pPower : None);
         aPawns.AddItem(m_aPowerIcons[nIcon].pPawn);
         aPowerNames.AddItem(m_aPowerIcons[nIcon].nmPowerName);
         aNames.AddItem(m_aPowerIcons[nIcon].sName);
@@ -249,10 +350,13 @@ public event function bool HandleInputEvent(BioGuiEvents Event, optional float f
         aResources.AddItem(m_aPowerIcons[nIcon].sIconResource);
         aIconIds.AddItem(m_aPowerIcons[nIcon].nIcon);
         aCooldowns.AddItem(m_aPowerIcons[nIcon].nCooldownValue);
-        aMapped.AddItem(m_aPowerIcons[nIcon].bMapped);
         aStates.AddItem(m_aPowerIcons[nIcon].eState);
         aDesiredStates.AddItem(m_aPowerIcons[nIcon].eDesiredState);
-        aMapIcons.AddItem(m_aPowerIcons[nIcon].oMappedIcon.eIcon);
+    }
+    m_pShepardPawn.PowerManager.Powers = aOriginalPowers;
+    for (nPower = 0; nPower < aOriginalPowers.Length; ++nPower)
+    {
+        aOriginalPowers[nPower].WheelDisplayIndex = aOriginalIndices[nPower];
     }
     for (nIcon = 0; nIcon < m_aPowerIcons.Length; ++nIcon)
     {
@@ -271,11 +375,11 @@ public event function bool HandleInputEvent(BioGuiEvents Event, optional float f
     for (nSlot = 0; nSlot < 8; ++nSlot)
     {
         nIcon = m_oPowerIndices.aPlayer[nSlot];
-        nSourceSlot = InStr("01234567", Mid(sMap, nPage * 8 + nSlot, 1));
+        nSourceSlot = InStr("0123456789ABCDEF", Mid(sMap, nPage * 8 + nSlot, 1));
         m_aPowerIcons[nIcon].SetSelected(FALSE);
         m_aPowerIcons[nIcon].Hide();
         m_aPowerIcons[nIcon].ClearIcon();
-        if (nSourceSlot >= 0 && aPowers[nSourceSlot] != None)
+        if (nSourceSlot >= 0 && nSourceSlot < aPowers.Length && aPowers[nSourceSlot] != None)
         {
             m_aPowerIcons[nIcon].pPawn = aPawns[nSourceSlot];
             m_aPowerIcons[nIcon].nmPowerName = aPowerNames[nSourceSlot];
@@ -284,8 +388,6 @@ public event function bool HandleInputEvent(BioGuiEvents Event, optional float f
             m_aPowerIcons[nIcon].sName = aNames[nSourceSlot];
             m_aPowerIcons[nIcon].sDescription = aDescriptions[nSourceSlot];
             m_aPowerIcons[nIcon].nCooldownValue = aCooldowns[nSourceSlot];
-            m_aPowerIcons[nIcon].bMapped = aMapped[nSourceSlot];
-            m_aPowerIcons[nIcon].oMappedIcon.eIcon = aMapIcons[nSourceSlot];
             // Native setup can leave the prior page's empty visual state on an occupied source.
             if (aStates[nSourceSlot] == SFXPowerWheelPowerState.PWPS_Selected || aStates[nSourceSlot] == SFXPowerWheelPowerState.PWPS_EmptySelectable || aStates[nSourceSlot] == SFXPowerWheelPowerState.PWPS_EmptySelected)
             {
@@ -314,11 +416,28 @@ public event function bool HandleInputEvent(BioGuiEvents Event, optional float f
         m_aPowerIcons[nIcon].UpdateDisplay();
         m_aPowerIcons[nIcon].SetStateDisplay();
         m_aPowerIcons[nIcon].MadeVisible(TRUE);
+
     }
+    EPWRefreshMappingIcons();
+    EPWUpdateSuggestedDisplay();
     SetInformationText("", "", FALSE);
     SetUseText("");
     SetMapText("", 0, "", 0, "", 0);
-    m_fLastProcessedStickAngle = -1.0;
+    if (bPreserveHover && m_nCurrentPowerIconIndex >= 0 && m_nCurrentPowerIconIndex < m_aPowerIcons.Length)
+    {
+        if (m_aPowerIcons[m_nCurrentPowerIconIndex].pPower != None)
+        {
+            m_aPowerIcons[m_nCurrentPowerIconIndex].SetHover(TRUE, TRUE);
+            m_aPowerIcons[m_nCurrentPowerIconIndex].SetSelected(TRUE);
+        }
+        UpdateTextDisplayForIcon(m_nCurrentPowerIconIndex);
+    }
+    else if (!bPageRedraw)
+    {
+        m_fLastProcessedStickAngle = -1.0;
+    }
     m_aPowerIconInfo[0].Id = sMap $ sSelected $ string(nPage);
+    EPWUpdateSuggestedDisplay();
+    EPWRefreshMappingIcons();
     return TRUE;
 }

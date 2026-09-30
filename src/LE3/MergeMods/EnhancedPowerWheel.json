@@ -7,25 +7,25 @@
         {
           "entryname": "SFXSFHandler_PowerWheel",
           "addtoclassorreplace": {
-            "scriptfilenames": ["SFXSFHandler_PowerWheel.Update.uc"]
-          }
-        },
-        {
-          "entryname": "SFXSFHandler_PowerWheel.HandleInputEvent",
-          "scriptupdate": {
-            "scriptfilename": "SFXSFHandler_PowerWheel.HandleInputEvent.uc"
+            "scriptfilenames": [
+              "SFXSFHandler_PowerWheel.EPWPrimerMask.uc",
+              "SFXSFHandler_PowerWheel.EPWDetonatorMask.uc",
+              "SFXSFHandler_PowerWheel.EPWPlayerPowers.uc",
+              "SFXSFHandler_PowerWheel.EPWPowerKey.uc",
+              "SFXSFHandler_PowerWheel.EPWSaveMap.uc",
+              "SFXSFHandler_PowerWheel.EPWUpdateSwitchHint.uc",
+              "SFXSFHandler_PowerWheel.EPWUpdateSuggestedDisplay.uc",
+              "SFXSFHandler_PowerWheel.EPWRefreshMappingIcons.uc",
+              "SFXSFHandler_PowerWheel.Update.uc",
+              "SFXSFHandler_PowerWheel.HandleInputEvent.uc",
+              "SFXSFHandler_PowerWheel.WheelVisibilityChanged.uc"
+            ]
           }
         },
         {
           "entryname": "SFXSFHandler_PowerWheel.SelectCurrentWheelItem",
           "scriptupdate": {
             "scriptfilename": "SFXSFHandler_PowerWheel.SelectCurrentWheelItem.uc"
-          }
-        },
-        {
-          "entryname": "SFXSFHandler_PowerWheel.WheelVisibilityChanged",
-          "scriptupdate": {
-            "scriptfilename": "SFXSFHandler_PowerWheel.WheelVisibilityChanged.uc"
           }
         },
         {
