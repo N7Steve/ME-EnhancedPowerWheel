@@ -5,6 +5,7 @@ using LegendaryExplorerCore;
 using LegendaryExplorerCore.Packages;
 using LegendaryExplorerCore.UnrealScript;
 using LegendaryExplorerCore.Unreal;
+using LegendaryExplorerCore.Unreal.BinaryConverters;
 
 try { return Run(args); }
 catch (Exception exception)
@@ -16,6 +17,53 @@ catch (Exception exception)
 static int Run(string[] args)
 {
     // Read-only inspection and in-memory compilation. Never saves a game package.
+    if (args.Length == 2 && args[0] == "packageinfo")
+    {
+        LegendaryExplorerCoreLib.InitLib(TaskScheduler.Default);
+        using var p = MEPackageHandler.OpenMEPackage(Path.GetFullPath(args[1]));
+        Console.WriteLine($"{p.FilePath}: flags={p.Flags}");
+        foreach (var e in p.Exports.Where(e => e.IsClass || e.ClassName == "Package"))
+            Console.WriteLine($"{e.InstancedFullPath}: object={e.ObjectFlags}; export={e.ExportFlags}; super={e.SuperClass?.InstancedFullPath}; archetype={e.Archetype?.InstancedFullPath}");
+        return 0;
+    }
+    if (args.Length == 5 && args[0] == "buildhudcompat")
+        return HudCompatibilityBuilder.Build(args[1], args[2], args[3], args[4]);
+    if (args.Length == 3 && args[0] == "configdump")
+    {
+        using var input = File.OpenRead(Path.GetFullPath(args[1]));
+        Directory.CreateDirectory(args[2]);
+        foreach (var file in LegendaryExplorerCore.Coalesced.CoalescedConverter.DecompileGame3ToMemory(input))
+            File.WriteAllText(Path.Combine(args[2], Path.GetFileName(file.Key)), file.Value);
+        return 0;
+    }
+    if (args.Length == 4 && args[0] == "classinfo")
+    {
+        LegendaryExplorerCoreLib.InitLib(TaskScheduler.Default);
+        using var infoPackage = MEPackageHandler.OpenMEPackage(Path.GetFullPath(args[1]));
+        var infoFilter = new Regex(args[3], RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, TimeSpan.FromSeconds(2));
+        var info = infoPackage.Exports.Where(e => e.IsClass && infoFilter.IsMatch(e.InstancedFullPath)).Select(e =>
+        {
+            var binary = ObjectBinary.From<UClass>(e);
+            var defaults = infoPackage.GetUExport(binary.Defaults);
+            return new
+            {
+                name = e.InstancedFullPath,
+                parent = infoPackage.GetEntry(e.idxSuperClass)?.InstancedFullPath,
+                virtualFunctions = binary.VirtualFunctionTable.Select(i => new { index = i, path = infoPackage.GetEntry(i)?.InstancedFullPath }).ToArray(),
+                strings = defaults.GetProperties().OfType<StrProperty>().Select(p => new { name = p.Name.Instanced, index = p.StaticArrayIndex, value = p.Value }).ToArray(),
+                objects = defaults.GetProperties().OfType<ObjectProperty>().Select(p => new { name = p.Name.Instanced, index = p.StaticArrayIndex, path = infoPackage.GetEntry(p.Value)?.InstancedFullPath }).ToArray()
+            };
+        }).ToArray();
+        File.WriteAllText(Path.GetFullPath(args[2]), JsonSerializer.Serialize(info, new JsonSerializerOptions { WriteIndented = true }));
+        Console.WriteLine($"Inspected {info.Length} classes without modifying the package.");
+        return 0;
+    }
+    if (args.Length == 2 && args[0] == "auditwheel")
+    {
+        LegendaryExplorerCoreLib.InitLib(TaskScheduler.Default);
+        using var auditPackage = MEPackageHandler.OpenMEPackage(Path.GetFullPath(args[1]));
+        return AuditWheel(auditPackage) ? 0 : 1;
+    }
     if (args.Length == 4 && args[0] == "extractswf")
     {
         LegendaryExplorerCoreLib.InitLib(TaskScheduler.Default);
@@ -74,6 +122,14 @@ static int Run(string[] args)
                         results.Add(new { export = name, member = memberName, success = memberSuccess, log = memberLog.ToString() });
                     }
                     changedClasses.Add(classExport.UIndex);
+                    // Local research evidence includes the actual dispatch targets
+                    // after recompilation, not only inherited function names.
+                    var compiledClass = ObjectBinary.From<UClass>(classExport);
+                    File.WriteAllLines(Path.Combine(args[3], name + ".virtual-functions.tsv"),
+                        compiledClass.VirtualFunctionTable.Select(i => $"{i}\t{target.GetEntry(i)?.InstancedFullPath}"));
+                    var (classAst, classSource) = UnrealScriptCompiler.DecompileExport(classExport, symbols, usop);
+                    if (classAst is null) errors++;
+                    File.WriteAllText(Path.Combine(args[3], name + ".uc"), classSource);
                     continue;
                 }
                 var scriptName = change.GetProperty("scriptupdate").GetProperty("scriptfilename").GetString()!;
@@ -97,14 +153,21 @@ static int Run(string[] args)
             if (!changedClasses.Contains(index) && !SHA256.HashData(target.GetUExport(index).Data).SequenceEqual(fingerprint))
                 throw new InvalidOperationException($"Class export changed during function compilation: {target.GetUExport(index).InstancedFullPath}");
         Console.WriteLine("PASS: only classes explicitly listed for member addition changed class export data.");
+        if (target.Game == MEGame.LE3 && changedClasses.Any(index => target.GetUExport(index).InstancedFullPath == "SFXSFHandler_PowerWheel"))
+        {
+            var virtualSuccess = AuditWheel(target);
+            if (!virtualSuccess) errors++;
+            results.Add(new { check = "wheel-virtual-inheritance", success = virtualSuccess });
+        }
         File.WriteAllText(Path.Combine(args[3], "validation.json"), JsonSerializer.Serialize(results, new JsonSerializerOptions { WriteIndented = true }));
+        File.WriteAllLines(Path.Combine(args[3], "imports.tsv"), target.Imports.Select(e => $"{e.UIndex}\t{e.ClassName}\t{e.InstancedFullPath}"));
         return errors == 0 ? 0 : 1;
     }
 
     // Full decompilations must stay in ignored local research.
     if (args.Length != 3)
     {
-        Console.Error.WriteLine("Usage: PackageResearch <package.pcc> <output-directory> <class-or-function-regex> | list <package.pcc> <export-regex> | validate <package.pcc> <manifest.json> <output-directory>");
+        Console.Error.WriteLine("Usage: PackageResearch <package.pcc> <output-directory> <class-or-function-regex> | list <package.pcc> <export-regex> | validate <package.pcc> <manifest.json> <output-directory> | auditwheel <package.pcc> | configdump <coalesced.bin> <output-directory> | classinfo <package.pcc> <output.json> <class-regex> | buildhudcompat <hud-mod-root> <SFXGame.pcc> <source-directory> <new-output-directory>");
         return 2;
     }
 
@@ -145,4 +208,28 @@ static int Run(string[] args)
     File.WriteAllText(Path.Combine(output, "inspection.json"), JsonSerializer.Serialize(metadata, new JsonSerializerOptions { WriteIndented = true }));
     Console.WriteLine($"{package.Game}: exported {count}; failed {failures.Count}; SHA256 {metadata.sha256}");
     return failures.Count == 0 ? 0 : 1;
+}
+
+static bool AuditWheel(IMEPackage package)
+{
+    var parentExport = package.Exports.Single(e => e.IsClass && e.InstancedFullPath == "SFXSFHandler_PowerWheel");
+    var childExport = package.Exports.Single(e => e.IsClass && e.InstancedFullPath == "SFXSFHandler_PCPowerWheel");
+    var parent = ObjectBinary.From<UClass>(parentExport);
+    var child = ObjectBinary.From<UClass>(childExport);
+    var childNames = child.VirtualFunctionTable.Select(index => package.GetEntry(index)?.ObjectName.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
+    var missing = parent.VirtualFunctionTable.Select(index => package.GetEntry(index)).Where(entry => !childNames.Contains(entry?.ObjectName.Name)).ToList();
+    // Tables are class-specific: compare inherited membership/count, not slot order.
+    var success = child.VirtualFunctionTable.Length >= parent.VirtualFunctionTable.Length && missing.Count == 0;
+    Console.WriteLine($"{(success ? "PASS" : "FAIL")}: wheel virtual inheritance: base {parent.VirtualFunctionTable.Length}, PC {child.VirtualFunctionTable.Length}; missing inherited functions {missing.Count}.");
+    foreach (var entry in missing) Console.WriteLine($"Missing in PC wheel: {entry?.InstancedFullPath}");
+    var virtualIndices = parent.VirtualFunctionTable.ToHashSet();
+    foreach (var export in package.Exports.Where(e => e.ClassName == "Function" && e.idxLink == parentExport.UIndex && e.ObjectName.Name.StartsWith("EPW", StringComparison.Ordinal)))
+    {
+        var function = ObjectBinary.From<UFunction>(export);
+        var final = function.FunctionFlags.HasFlag(UnrealFlags.EFunctionFlags.Final);
+        var isVirtual = virtualIndices.Contains(export.UIndex);
+        Console.WriteLine($"{(final && !isVirtual ? "PASS" : "FAIL")}: {export.ObjectName.Name}: final={final}, virtual={isVirtual}");
+        success &= final && !isVirtual;
+    }
+    return success;
 }

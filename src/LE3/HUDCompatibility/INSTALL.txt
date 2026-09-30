@@ -1,0 +1,37 @@
+EPW + HUD Enhancements compatibility POC 0.3 (LE3)
+
+Requires HUD Enhancements 1.1 and Enhanced Power Wheel 1.9.9.
+Experimental controller-wheel fix. Compilation is verified; gameplay is not yet confirmed.
+
+INSTALL
+1. Close LE3. Keep your existing Mod Manager basegame backup and a copy of your test save.
+2. Install HUD Enhancements 1.1 and Enhanced Power Wheel 1.9.9 through Mod Manager.
+3. If POC 0.1 or 0.2 is installed, remove its DLC_MOD_EPWHUDCompat through Mod Manager first.
+   Import this folder into Mod Manager and install the compatibility POC last.
+   Mod Manager requires DLC_MOD_HUDEnhance; EPW is a basegame merge and must be checked manually.
+4. Start LE3 and test RB opening, R3 page changes, LB movement/swaps, badges and fades.
+   Also test close/reopen, weapons, squad powers and HUD behavior when changing input device.
+
+FILES / BACKUP
+This patch adds only BIOGame/DLC/DLC_MOD_EPWHUDCompat:
+  CookedPCConsole/Startup_MOD_EPWHUDCompat_INT.pcc (original subclass only)
+  CookedPCConsole/Default_DLC_MOD_EPWHUDCompat.bin (startup and controller movie registration)
+  CookedPCConsole/Mount.dlc
+  CookedPCConsole/DLC_MOD_EPWHUDCompat_{INT,DEU,ESN,FRA,ITA,JPN,POL,RUS}.tlk
+Mod Manager can additionally create its metadata in the new folder and maintain its own config state.
+No existing SFXGame, HUD Enhancements package or save file is replaced by this patch.
+For a first install there are no overwritten patch files to back up.
+If upgrading/reinstalling the patch, copy the existing DLC_MOD_EPWHUDCompat folder first.
+Do not remove the prerequisite mods while this patch is enabled.
+
+UNINSTALL
+Close LE3 and remove/disable DLC_MOD_EPWHUDCompat through Mod Manager's installed DLC management.
+If necessary, remove only that exact DLC folder from the game's BIOGame/DLC directory.
+HUD Enhancements' original movie registration applies again on the next launch.
+Restore the saved patch folder only if reverting to a previous patch version.
+Keep HUD Enhancements and EPW installed if you only want to remove this patch.
+
+PROVENANCE
+The startup contains original EPWHUDCompat code and imports of existing game/HUD classes.
+It does not include HUD Enhancements code, its SWFs, textures or original game packages.
+This build is a separate custom DLC, not an M3M. Hashes and import evidence are in build-evidence.json.
