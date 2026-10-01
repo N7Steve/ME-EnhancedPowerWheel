@@ -33,3 +33,7 @@ For deployment, Mod Manager merges into the LE3 basegame `SFXGame.pcc`. Before d
 - [LegendaryExplorerCore](https://github.com/ME3Tweaks/LegendaryExplorer) package and UnrealScript APIs.
 - [ME3Tweaks Merge Mod format](https://github.com/ME3Tweaks/ME3TweaksModManager/blob/staticfiles/documentation/merge_mods.md).
 - [Mod Manager command-line compiler announcement](https://github.com/ME3Tweaks/ME3TweaksModManager/issues/413).
+
+## Validator cache refresh correction
+
+During LE2 0.2 development, repeated member compilations exposed stale `FileLib` binary/symbol caches in our helper. Core's pinned `UnrealScript/FileLib.cs` explicitly requires `ReInitializeFile` between compilation operations. The validator now refreshes after each successful mutation before further compilation or round-trip decompilation. This resolves the false class-chain loop seen in both LE2 and LE3. The full current LE3 1.9.9 merge passes again, including virtual inheritance and final-helper checks, without altering LE3 source or installed packages. LE2 has no serialized game-3 virtual table; its new class additions instead receive property-declaration and final-helper checks.

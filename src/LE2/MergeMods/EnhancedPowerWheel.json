@@ -1,0 +1,49 @@
+{
+  "files": [
+    {
+      "filename": "SFXGame.pcc",
+      "changes": [
+        {
+          "entryname": "SFXSFHandler_PowerWheel",
+          "addtoclassorreplace": {
+            "scriptfilenames": [
+              "SFXSFHandler_PowerWheel.EPWUpdateUI.uc",
+              "SFXSFHandler_PowerWheel.Update.uc"
+            ]
+          }
+        },
+        {
+          "scriptupdate": {
+            "scriptfilename": "SFXSFHandler_PowerWheel.HandleInputEvent.uc"
+          },
+          "entryname": "SFXSFHandler_PowerWheel.HandleInputEvent"
+        },
+        {
+          "scriptupdate": {
+            "scriptfilename": "SFXSFHandler_PowerWheel.SelectCurrentWheelItem.uc"
+          },
+          "entryname": "SFXSFHandler_PowerWheel.SelectCurrentWheelItem"
+        },
+        {
+          "scriptupdate": {
+            "scriptfilename": "SFXSFHandler_PowerWheel.HoverPowerIcon.uc"
+          },
+          "entryname": "SFXSFHandler_PowerWheel.HoverPowerIcon"
+        },
+        {
+          "scriptupdate": {
+            "scriptfilename": "SFXSFHandler_PowerWheel.WheelVisibilityChanged.uc"
+          },
+          "entryname": "SFXSFHandler_PowerWheel.WheelVisibilityChanged"
+        },
+        {
+          "scriptupdate": {
+            "scriptfilename": "SFXSFHandler_PowerWheel.CleanupReferences.uc"
+          },
+          "entryname": "SFXSFHandler_PowerWheel.CleanupReferences"
+        }
+      ]
+    }
+  ],
+  "game": "LE2"
+}

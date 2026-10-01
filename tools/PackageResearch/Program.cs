@@ -92,6 +92,7 @@ static int Run(string[] args)
         var usop = new UnrealScriptOptionsPackage();
         if (!symbols.Initialize(usop)) throw new InvalidOperationException($"Symbol initialization failed: {symbols.InitializationLog}");
         var classData = target.Exports.Where(e => e.IsClass).ToDictionary(e => e.UIndex, e => SHA256.HashData(e.Data));
+        var le2WheelLayout = target.Game == MEGame.LE2 ? WheelLayout(target) : null;
         var manifestPath = Path.GetFullPath(args[2]);
         using var manifest = JsonDocument.Parse(File.ReadAllText(manifestPath));
         if (manifest.RootElement.GetProperty("game").GetString() != target.Game.ToString())
@@ -117,6 +118,10 @@ static int Run(string[] args)
                         var memberSource = File.ReadAllText(Path.Combine(Path.GetDirectoryName(manifestPath)!, memberName));
                         var memberLog = UnrealScriptCompiler.AddOrReplaceInClass(classExport, memberSource, symbols, usop);
                         var memberSuccess = !memberLog.HasErrors && !memberLog.HasLexErrors;
+                        // Core requires fresh symbols/binaries between mutations.
+                        // Cached UField.Next values can otherwise report false loops.
+                        if (memberSuccess && !symbols.ReInitializeFile(usop))
+                            throw new InvalidOperationException($"Symbol refresh failed after {memberName}: {symbols.InitializationLog}");
                         if (!memberSuccess) errors++;
                         Console.WriteLine($"{name} + {memberName}: {(memberSuccess ? "PASS" : "FAIL")} {memberLog}");
                         results.Add(new { export = name, member = memberName, success = memberSuccess, log = memberLog.ToString() });
@@ -126,7 +131,7 @@ static int Run(string[] args)
                     // after recompilation, not only inherited function names.
                     var compiledClass = ObjectBinary.From<UClass>(classExport);
                     File.WriteAllLines(Path.Combine(args[3], name + ".virtual-functions.tsv"),
-                        compiledClass.VirtualFunctionTable.Select(i => $"{i}\t{target.GetEntry(i)?.InstancedFullPath}"));
+                        (compiledClass.VirtualFunctionTable ?? []).Select(i => $"{i}\t{target.GetEntry(i)?.InstancedFullPath}"));
                     var (classAst, classSource) = UnrealScriptCompiler.DecompileExport(classExport, symbols, usop);
                     if (classAst is null) errors++;
                     File.WriteAllText(Path.Combine(args[3], name + ".uc"), classSource);
@@ -142,6 +147,8 @@ static int Run(string[] args)
                 Console.WriteLine($"{name}: {(success ? "PASS" : "FAIL")} {log}");
                 if (success)
                 {
+                    if (!symbols.ReInitializeFile(usop))
+                        throw new InvalidOperationException($"Symbol refresh failed after {name}: {symbols.InitializationLog}");
                     var (roundTripAst, text) = UnrealScriptCompiler.DecompileExport(export, symbols, usop);
                     if (roundTripAst is null) { success = false; errors++; }
                     File.WriteAllText(Path.Combine(args[3], name + ".uc"), text);
@@ -153,6 +160,15 @@ static int Run(string[] args)
             if (!changedClasses.Contains(index) && !SHA256.HashData(target.GetUExport(index).Data).SequenceEqual(fingerprint))
                 throw new InvalidOperationException($"Class export changed during function compilation: {target.GetUExport(index).InstancedFullPath}");
         Console.WriteLine("PASS: only classes explicitly listed for member addition changed class export data.");
+        if (le2WheelLayout is not null && changedClasses.Any(index => target.GetUExport(index).InstancedFullPath == "SFXSFHandler_PowerWheel"))
+        {
+            var layoutSuccess = le2WheelLayout.SequenceEqual(WheelLayout(target));
+            var helpers = target.Exports.Where(e => e.ClassName == "Function" && e.Parent?.InstancedFullPath == "SFXSFHandler_PowerWheel" && e.ObjectName.Name.StartsWith("EPW", StringComparison.Ordinal));
+            var helperSuccess = helpers.All(e => ObjectBinary.From<UFunction>(e).FunctionFlags.HasFlag(UnrealFlags.EFunctionFlags.Final));
+            Console.WriteLine($"{(layoutSuccess && helperSuccess ? "PASS" : "FAIL")}: LE2 wheel class/struct property declarations unchanged; EPW helpers final={helperSuccess}.");
+            if (!layoutSuccess || !helperSuccess) errors++;
+            results.Add(new { check = "le2-wheel-native-layout", success = layoutSuccess && helperSuccess });
+        }
         if (target.Game == MEGame.LE3 && changedClasses.Any(index => target.GetUExport(index).InstancedFullPath == "SFXSFHandler_PowerWheel"))
         {
             var virtualSuccess = AuditWheel(target);
@@ -233,3 +249,13 @@ static bool AuditWheel(IMEPackage package)
     }
     return success;
 }
+
+static string[] WheelLayout(IMEPackage package) => package.Exports
+    .Where(e => e.InstancedFullPath.StartsWith("SFXSFHandler_PowerWheel.", StringComparison.Ordinal)
+        && e.ClassName.EndsWith("Property", StringComparison.Ordinal)
+        && (e.Parent?.IsClass == true || e.Parent?.ClassName == "ScriptStruct"))
+    .Select(e =>
+    {
+        var property = (UProperty)ObjectBinary.From(e);
+        return $"{e.InstancedFullPath}|{e.ClassName}|{property.ArraySize}|{property.PropertyFlags}";
+    }).Order(StringComparer.Ordinal).ToArray();

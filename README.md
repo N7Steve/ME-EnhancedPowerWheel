@@ -39,6 +39,14 @@ The current LE3 proof of concept has two pages while the Power Wheel stays open:
 
 The project owner confirmed the ordering behavior through the LT version in game, including the personalized first page on RB, page switching, and immediate icon rendering. The new LB, feedback, and overflow behavior need separate in-game checks. The arrangement is written to the current game's plot variables and reloaded when the wheel opens; it reaches disk with the next game save. Save/quit/reload behavior has not been separately confirmed by the owner. Version 1.9 expands Shepard's displayed capacity to 16; it does not grant powers or establish general mod compatibility.
 
+## LE2 ordering POC and startup recovery
+
+LE2 version 0.3.2 switches pages with R3 and uses the native colored R3/LB controller-library images. LB ordering, the accepted fade, blue selection outline and First Aid counter fix remain. At the owner's request, all movie FPS/UI-speed corrections from 0.3.1 are removed; timing belongs to the game and independent mods. See [R3/color checkpoint and artifact](docs/architecture/le2-r3-color-icons-v0.3.2.md).
+
+The new export changes only SFXGame.pcc and contains no Startup assets. If 0.3.1's movie merge was installed, its Startup edits need restoration through Mod Manager followed by reapplying desired mods; the script-only update cannot undo those asset edits. The export documents that recovery and its own backup/removal plan. Build/export do not install. New R3/icon rendering awaits owner confirmation.
+
+With local toolchain paths configured, run `scripts/Inspect-Le2.ps1`, `scripts/Build-Le2.ps1` and `scripts/Export-Le2Folder.ps1`. During recovery, `Build-Le2.ps1 -ValidationPackagePath <backup SFXGame.pcc>` validates against the backup without modifying it or the installed game.
+
 ## Development
 
 Prerequisites: a local LE3 installation, the pinned LegendaryExplorer source checkout, .NET SDK 10.0.401 and .NET 8 runtime, PowerShell, and ME3Tweaks Mod Manager 9.2.1.137. Copy `local.settings.example.ps1` to ignored `local.settings.ps1`, set verified local paths, then dot-source it. Run `scripts/Build-ResearchTool.ps1`, `scripts/Inspect-Le3.ps1`, `scripts/Build-Le3.ps1`, and `scripts/Export-Le3Folder.ps1`. The build validates four function replacements and the wheel's `Update` override, then creates `build/LE3/MergeMods/EnhancedPowerWheel.m3m`; export creates an import folder under `dist/`. Neither command installs anything. See [toolchain research](docs/research/toolchain.md) and [ordering implementation](docs/architecture/ordering-poc.md).
