@@ -1,6 +1,6 @@
-Enhanced Power Wheel - LE2 Cadence and Color Icons 0.3.2
+Enhanced Power Wheel - LE2 Save Ordering 0.4
 
-EXPERIMENTAL: compiled against the registered vanilla LE2 backup; UI speed / tooltip fixes unverified.
+EXPERIMENTAL: validated against installed LE2 and registered vanilla backup; gameplay checks pending.
 The owner confirmed 0.1 navigation; 0.2 and 0.2.1 crash at startup.
 The owner confirmed 0.2.2 works; its vanilla cleanup is retained.
 0.2.3 was accepted by the owner after the charge-counter correction.
@@ -8,7 +8,13 @@ The owner confirmed 0.3 interactions and fade, but reported accelerated UI and
 broken help glyphs. 0.3.1 enabled
 embedded-font/HTML text fields, preserving the fade duration.
 The owner clarified that UI speed belongs to another mod. All EPW movie-FPS
-corrections are removed in 0.3.2. Only R3 switching and colored button images change.
+corrections remain removed. 0.3.3 restores hover after reordering, suppresses red
+NotSuggested artwork by default and refreshes LB/RB/Y assignment badges on both pages.
+0.3.4 explicitly clears badge backgrounds/symbols after native wheel close, sets
+the warning clip alpha to zero, and compacts visible help rows at 28px spacing.
+The owner confirmed 0.3.4 works very well. Its visual fixes remain unchanged.
+0.4 saves the sixteen-slot layout in the loaded save plot table using power identity.
+New persistence still needs an in-game save/quit/reload check.
 This version adds visible/selectable empty positions and player-power ordering.
 
 BUILD/EXPORT
@@ -20,7 +26,7 @@ installed SFXGame.pcc hash and existing mods, and copy the test save.
 If 0.2 or 0.2.1 remains installed, FIRST restore LE2 basegame through Mod Manager.
 For a working 0.2.2/0.2.3/0.3 installation, this merge may be installed over it.
 Reapply other desired basegame mods WITHOUT EPW 0.2. Keep their installation order.
-Then import this folder into Mod Manager and install 0.3.2 for LE2.
+Then import this folder into Mod Manager and install 0.4 for LE2.
 Installing over 0.2 does not undo its native class recompilation and is not recovery.
 The locally registered backup is Y:\Mass Effect\Backups\LE2.
 INSTALLED FILE CHANGED BY THIS VERSION
@@ -37,7 +43,9 @@ mods that own those files, including the independent time/UI-speed mod.
 Do not restore SFXGame after installing this version unless reinstalling EPW too.
 Replaced SFXSFHandler_PowerWheel functions: HandleInputEvent,
 SelectCurrentWheelItem, HoverPowerIcon, WheelVisibilityChanged, CleanupReferences.
-Adds final helper EPWUpdateUI and event Update to SFXSFHandler_PowerWheel.
+Adds final helpers EPWUpdateUI, EPWUpdateSuggestedDisplay, EPWRefreshMappingIcons
+EPWLayoutHelp, EPWPowerKey, EPWLoadMap, EPWSaveMap, and event Update
+to SFXSFHandler_PowerWheel.
 This recompiles that class; its native fields/structs are checked unchanged.
 Update keeps Super.Update and only operates on the initialized, open power panel.
 The redraw lives inside existing HandleInputEvent, reached by an internal sentinel.
@@ -54,6 +62,11 @@ A activates the hovered occupied power on either page; empty slots cannot activa
 Squad powers stay on page 0. They are not included in ordering.
 X/B retain native mapping actions on occupied page 0.
 Pagination does not rewrite controller assignments or PC quickslots.
+
+NOTSUGGESTED OPTION
+EPWUpdateSuggestedDisplay defaults bShowNotSuggested to FALSE. Change that default
+to TRUE and rebuild/export to restore vanilla red artwork. No gameplay evaluation
+or controller assignments are changed by this option.
 
 TEST SEQUENCE
 0. Confirm startup reaches the main menu, then load a test save.
@@ -75,15 +88,49 @@ TEST SEQUENCE
 4. Verify the power icon/text appears there and A activates that exact power.
 5. Verify its old position on page 0 is empty and A does nothing there.
 6. Swap two occupied positions, including one across pages, then move a power back.
+   After each move/swap, hold the stick still: the destination must immediately
+   retain native green hover without moving away and returning. Check cancel too.
+   LB/RB/Y badges must follow assigned powers to the new slot on either page; empty
+   and unassigned slots must have no badge. Close/reopen and reassign with X/B.
+   Check standard, southpaw and swapped shoulder/trigger controller layouts.
+   Against a resistant target, verify no red NotSuggested overlay for Shepard or
+   squad; cooldown/inactive/activated artwork and activation rules must remain.
+   Rebuild with bShowNotSuggested=TRUE to compare native warning artwork.
+   Close normally and mid-fade: no badge symbol/background may remain in gameplay.
+   Reopen, switch pages and open the weapon wheel to check visibility/reset.
+   Test 0/1/2 mapping actions with and without Use power: visible native and EPW
+   hints must form consecutive aligned rows with no empty row. Check English/Spanish
+   and swapped menu-advance controls; trailing LB/RB glyphs must follow their text.
 7. Close on both pages and reopen: page 0 should show the current session order.
 8. Test cooldowns, unavailable powers, mapping badges, a deflected stick, and no squad.
 9. Check unchanged weapon wheel, keyboard/mouse wheel and controller assignments.
 
-PERSISTENCE LIMIT
-Ordering survives wheel close/reopen in the same GUI/game session only.
-It is not written into saves. Destroying the Flash panel discards it.
-Session changes that reuse the same panel have not been tested.
-A change in native source power order resets the layout to avoid stale source indices.
+SAVE PERSISTENCE
+Moves/swaps update the current game plot table. Save normally after reordering;
+no forced autosave or direct save-file edit is performed by EPW. Loading an older
+save restores that save layout, not the most recent unsaved session layout.
+Each save/character retains its own arrangement on both pages. New saves without
+EPW data start with native order. Matching uses BaseName, falling back to PowerName.
+Existing powers retain positions if native source order changes; new powers fill
+the first hole. Removed powers leave holes. Opening still resets to page 0; hover,
+selected move, page fade and help positions are transient and are not saved.
+Visual preferences are build defaults, not a new runtime configuration menu.
+LB/RB/Y assignments continue to use the game own save logic.
+Plot integers 7400-7416 are EPW project allocations: marker plus sixteen identity
+keys. Native LE2 integer arrays grow to at least 7417 entries (about 29 KiB total).
+An occupied foreign block is not overwritten; mod compatibility is not guaranteed.
+The data is inert after uninstall; removal does not require editing existing saves.
+Copy the test save before checking persistence.
+
+PERSISTENCE TEST
+1. Move powers to both pages, including empty destinations and occupied swaps.
+2. Save A, quit LE2 completely, restart, load A and open the wheel: order must match.
+3. Change the arrangement, save B, then load A and B in the same running session:
+   each must restore its own layout with no stale Flash carryover.
+4. Load another character/save with no EPW record: native default order must appear.
+5. Change/evolve a power and check retained positions, added powers and removals.
+6. Repeat selected cross-page moves after reload. Check hover, badges, counter,
+   overlay cleanup and compact help remain as confirmed in 0.3.4.
 This POC relocates the original eight native player entries into sixteen positions;
 it does not collect additional powers beyond the native source limit.
 

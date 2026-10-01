@@ -1,21 +1,29 @@
-EPW + HUD Enhancements compatibility POC 0.3 (LE3)
+EPW + HUD Enhancements compatibility patch 0.4 (LE3 PC + controller)
 
-Requires HUD Enhancements 1.1 and Enhanced Power Wheel 1.9.9.
-Experimental controller-wheel fix. Compilation is verified; gameplay is not yet confirmed.
+Requires HUD Enhancements 1.1 and Enhanced Power Wheel 1.10.3.
+Adds the PC Update and input bridge to the existing controller patch.
+Compilation/config/import checks pass; combined gameplay needs validation.
+HUD radar, quickslot state, right-mouse camera handling and GFx resources are retained.
+This build verifies the installed legacy adapter Update is empty, because HUD
+and EPW both call it. A nonempty adapter is not supported by this bridge.
 
 INSTALL
 1. Close LE3. Keep your existing Mod Manager basegame backup and a copy of your test save.
-2. Install HUD Enhancements 1.1 and Enhanced Power Wheel 1.9.9 through Mod Manager.
-3. If POC 0.1 or 0.2 is installed, remove its DLC_MOD_EPWHUDCompat through Mod Manager first.
-   Import this folder into Mod Manager and install the compatibility POC last.
+2. Install HUD Enhancements 1.1 and Enhanced Power Wheel 1.10.3 through Mod Manager.
+3. Back up any existing DLC_MOD_EPWHUDCompat folder, then remove that patch
+   through Mod Manager before upgrading. This includes version 0.3.
+   Import this folder into Mod Manager and install the compatibility patch last.
    Mod Manager requires DLC_MOD_HUDEnhance; EPW is a basegame merge and must be checked manually.
-4. Start LE3 and test RB opening, R3 page changes, LB movement/swaps, badges and fades.
-   Also test close/reopen, weapons, squad powers and HUD behavior when changing input device.
+4. Start LE3 and check PC opening shows all slots immediately without hover;
+   Space page changes, fades, Shepard/companion drag and green outlines, clicks,
+   cancel/close/reopen, cooldown icons and absence of the removed Space tooltip.
+   Check right-mouse camera movement and restore, radar, existing upper quickslots,
+   weapons, save/quit/reload and input-device changes. Retest RB/R3/LB on controller.
 
 FILES / BACKUP
 This patch adds only BIOGame/DLC/DLC_MOD_EPWHUDCompat:
-  CookedPCConsole/Startup_MOD_EPWHUDCompat_INT.pcc (original subclass only)
-  CookedPCConsole/Default_DLC_MOD_EPWHUDCompat.bin (startup and controller movie registration)
+  CookedPCConsole/Startup_MOD_EPWHUDCompat_INT.pcc (two original subclasses only)
+  CookedPCConsole/Default_DLC_MOD_EPWHUDCompat.bin (startup and PC/controller movie registration)
   CookedPCConsole/Mount.dlc
   CookedPCConsole/DLC_MOD_EPWHUDCompat_{INT,DEU,ESN,FRA,ITA,JPN,POL,RUS}.tlk
 Mod Manager can additionally create its metadata in the new folder and maintain its own config state.

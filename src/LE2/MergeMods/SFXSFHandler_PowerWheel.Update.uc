@@ -42,7 +42,7 @@ public event function Update(float fDeltaT)
         {
             oPanel.SetVariableFloat(m_aPowerIcons[nIcon].sPath $ "._alpha", fAlpha);
             oPanel.SetVariableFloat(m_aPowerIcons[nIcon].oMappedIcon.sPath $ "._alpha", fAlpha);
-            oPanel.SetVariableFloat(m_aPowerIcons[nIcon].sMappedBGPath $ "._alpha", fAlpha);
+            oPanel.SetVariableFloat("mainContent." $ m_aPowerIcons[nIcon].sMappedBGPath $ "._alpha", fAlpha);
         }
     }
     EPWUpdateUI(TRUE);

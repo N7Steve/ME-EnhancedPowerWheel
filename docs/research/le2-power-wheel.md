@@ -39,3 +39,15 @@ The owner confirms 0.3 fade/interaction but reports accelerated wheel animation 
 ## Scope correction and colored controller resources (0.3.2)
 
 The owner assigns UI cadence to a separate mod; all EPW FPS corrections/tools are removed. Read-only shared controller SWF mapping identifies native colored R3/LB images I2E/I1F. [0.3.2](../architecture/le2-r3-color-icons-v0.3.2.md) uses those images and R3 switching, targeting only SFXGame. Historical 0.3.1 Startup edits require owner restoration/reapplication; no deployment was performed here.
+
+## Hover and live assignment presentation (0.3.3)
+
+The owner reports lost green hover after reordering and missing assignment badges. Local LE2 SWF confirms all badge symbols coexist in one frame and mapping backgrounds live below mainContent; native class background paths are short names. Installed SFXGame exposes the three BioPlayerInput assignment names, and Engine exposes southpaw/shoulder-swap queries. [0.3.3](../architecture/le2-hover-mapping-v0.3.3.md) reconciles hover artwork, adds optional red-warning suppression and reads live assignments for both-page badges. Installed/vanilla compilation passes. Badge field semantics and visual results remain gameplay checks; native state/selection setter internals are not visible in UnrealScript.
+
+## Overlay lifetime and help gaps (0.3.4)
+
+The owner reports that 0.3.3 overlays persist after close, its warning suppression is ineffective, and missing native actions leave blank help rows. SWF inspection confirms `notSuggested` is an independently tinted child and native button root paths are aliases (swapped by the input-configuration callback). [0.3.4](../architecture/le2-overlay-help-v0.3.4.md) sets the warning child alpha, explicitly clears all real mapping clips after close, and caches/restores native positions while packing visible help. Installed/vanilla compilation passes; runtime correction is pending.
+
+## Save-specific persistence (0.4)
+
+The owner confirms 0.3.4 works very well and explicitly requests per-save/character persistence. Installed LE2 has a dense BioGlobalVariableTable.IntVariables array and a two-argument SetInt, unlike LE3's sparse API. Save-format source corroborates dense integer serialization. [0.4](../architecture/le2-save-ordering-v0.4.md) stores sixteen identity keys plus a marker in integers 7400–7416, reads the current loaded save on redraw, and canonicalizes empty source tokens after placement. Native assignments and confirmed visual helpers remain unchanged. Installed/vanilla compilation passes; save/quit/reload and evolved-power matching remain gameplay checks.

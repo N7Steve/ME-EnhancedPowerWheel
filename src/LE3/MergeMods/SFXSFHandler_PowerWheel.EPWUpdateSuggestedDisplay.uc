@@ -50,7 +50,11 @@ public final function EPWUpdateSuggestedDisplay(optional bool bShowNotSuggested 
                     aArgs[0].S = oIcon.sIconResource;
                     aArgs[1].Type = ASType.AS_Number;
                     aArgs[1].N = oIcon.nIcon;
+                    // SetIcon validates its previous cached index first.
+                    oLoader.SetNumber("m_nIcon", float(oIcon.nIcon));
                     oLoader.Invoke("SetIcon", aArgs);
+                    // Only the active normal-state proxy image is revealed.
+                    oLoader.SetVisible(TRUE);
                 }
             }
             oNotSuggested.SetVisible(FALSE);

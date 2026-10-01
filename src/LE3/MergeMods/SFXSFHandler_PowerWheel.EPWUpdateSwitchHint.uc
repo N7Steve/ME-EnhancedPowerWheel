@@ -44,6 +44,8 @@ public final function EPWUpdateSwitchHint(bool bVisible)
     local bool bPlayerSlot;
     local bool bOccupied;
     local bool bShowOrder;
+    local bool bSquadSlot;
+    local int nSquadSelected;
 
     oWheel = GetVariableObject(m_sWheelInnerPath);
     if (oWheel == None)
@@ -127,8 +129,14 @@ public final function EPWUpdateSwitchHint(bool bVisible)
     fTopY = aTexts[0].GetNumber("EPWHelpNativeY") - 24.0;
     bSelected = m_aPowerIconInfo.Length > 0 && Len(m_aPowerIconInfo[0].Id) >= 18 && InStr("ABCDEFGHIJKLMNOP", Mid(m_aPowerIconInfo[0].Id, 16, 1)) >= 0;
     bPlayerSlot = m_nCurrentPowerIconIndex >= 0 && m_nCurrentPowerIconIndex < m_aPowerIcons.Length && m_oPowerIndices.aPlayer.Find(m_nCurrentPowerIconIndex) >= 0;
-    bOccupied = bPlayerSlot && m_aPowerIcons[m_nCurrentPowerIconIndex].pPower != None;
-    bShowOrder = bPlayerSlot && (bSelected || bOccupied);
+    bSquadSlot = m_nCurrentPowerIconIndex >= 0 && m_nCurrentPowerIconIndex < m_aPowerIcons.Length && ((m_pHench1Pawn != None && m_oPowerIndices.aHench1.Find(m_nCurrentPowerIconIndex) >= 0) || (m_pHench2Pawn != None && m_oPowerIndices.aHench2.Find(m_nCurrentPowerIconIndex) >= 0));
+    if (bSquadSlot)
+    {
+        nSquadSelected = int(oWheel.GetNumber("EPWSquadSelected")) - 1;
+        bSelected = nSquadSelected >= 0 && ((m_oPowerIndices.aHench1.Find(m_nCurrentPowerIconIndex) >= 0 && m_oPowerIndices.aHench1.Find(nSquadSelected) >= 0) || (m_oPowerIndices.aHench2.Find(m_nCurrentPowerIconIndex) >= 0 && m_oPowerIndices.aHench2.Find(nSquadSelected) >= 0));
+    }
+    bOccupied = (bPlayerSlot || bSquadSlot) && EPWHasPower(m_aPowerIcons[m_nCurrentPowerIconIndex]);
+    bShowOrder = (bPlayerSlot || bSquadSlot) && (bSelected || bOccupied);
     // Switch first, contextual ordering second; hidden rows leave no gaps.
     fY = fTopY + 30.0;
     if (bShowOrder) { fY += 30.0; }

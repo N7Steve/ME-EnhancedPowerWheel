@@ -7,6 +7,12 @@
           "entryname": "SFXSFHandler_PowerWheel",
           "addtoclassorreplace": {
             "scriptfilenames": [
+              "SFXSFHandler_PowerWheel.EPWPowerKey.uc",
+              "SFXSFHandler_PowerWheel.EPWLoadMap.uc",
+              "SFXSFHandler_PowerWheel.EPWSaveMap.uc",
+              "SFXSFHandler_PowerWheel.EPWUpdateSuggestedDisplay.uc",
+              "SFXSFHandler_PowerWheel.EPWRefreshMappingIcons.uc",
+              "SFXSFHandler_PowerWheel.EPWLayoutHelp.uc",
               "SFXSFHandler_PowerWheel.EPWUpdateUI.uc",
               "SFXSFHandler_PowerWheel.Update.uc"
             ]

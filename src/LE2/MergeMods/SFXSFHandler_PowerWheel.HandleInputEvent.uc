@@ -12,7 +12,6 @@ public function HandleInputEvent(BioGuiEvents Event, optional float fValue = 1.0
     local SFXPowerWheelIconPower oPhysical;
     local SFXPowerWheelIconPower oEmpty;
     local SFXPowerWheelPowerState eDisplayState;
-    local SFXPowerWheelMapButtonIcon eMapping;
     local int nIcon;
     local int nSource;
     local int nState;
@@ -92,13 +91,25 @@ public function HandleInputEvent(BioGuiEvents Event, optional float fValue = 1.0
                 bValid = FALSE;
             }
         }
-        if (!bValid || nSeen != 255 || oPanel.GetVariableString("EPWLE2Sources") != sSignature)
+        // The loaded save is authoritative even when Flash survives a reload.
+        // Only a synchronous placement may use its just-edited cached map.
+        if (!oPanel.GetVariableBool("EPWLE2SavePending") || !bValid || nSeen != 255 || oPanel.GetVariableString("EPWLE2Sources") != sSignature)
         {
-            sMap = "01234567--------";
-            oPanel.SetVariableString("EPWLE2Map", sMap);
-            oPanel.SetVariableString("EPWLE2Sources", sSignature);
-            oPanel.SetVariableInt("EPWLE2Selected", -1);
+            sMap = EPWLoadMap(aSources);
+            if (sMap != oPanel.GetVariableString("EPWLE2Map") || oPanel.GetVariableString("EPWLE2Sources") != sSignature)
+            {
+                oPanel.SetVariableInt("EPWLE2Selected", -1);
+            }
         }
+        if (EPWSaveMap(sMap, aSources))
+        {
+            // Canonicalize native empty entries now, so a later page switch
+            // does not mistake their rearrangement for a changed layout/pick.
+            sMap = EPWLoadMap(aSources);
+        }
+        oPanel.SetVariableBool("EPWLE2SavePending", FALSE);
+        oPanel.SetVariableString("EPWLE2Map", sMap);
+        oPanel.SetVariableString("EPWLE2Sources", sSignature);
         nPage = oPanel.GetVariableInt("EPWLE2Page");
         nPage = nPage == 1 ? 1 : 0;
         oPanel.SetVariableInt("EPWLE2Page", nPage);
@@ -120,7 +131,7 @@ public function HandleInputEvent(BioGuiEvents Event, optional float fValue = 1.0
                 m_aPowerIcons[nIcon].bVisible = bVisible;
                 oPanel.SetClipVisibility(m_aPowerIcons[nIcon].sPath, bVisible);
                 oPanel.SetClipVisibility(m_aPowerIcons[nIcon].oMappedIcon.sPath, bVisible && m_aPowerIcons[nIcon].bMapped);
-                oPanel.SetClipVisibility(m_aPowerIcons[nIcon].sMappedBGPath, bVisible && m_aPowerIcons[nIcon].bMapped);
+                oPanel.SetClipVisibility("mainContent." $ m_aPowerIcons[nIcon].sMappedBGPath, bVisible && m_aPowerIcons[nIcon].bMapped);
             }
         }
         for (nSlot = 0; nSlot < 8; ++nSlot)
@@ -175,12 +186,8 @@ public function HandleInputEvent(BioGuiEvents Event, optional float fValue = 1.0
             {
                 oPanel.SetTextFieldText(m_aPowerIcons[nIcon].sPath $ ".powerIconMC.sub.txtInfo", "");
             }
-            eMapping = m_aPowerIcons[nIcon].oMappedIcon.eIcon;
-            m_aPowerIcons[nIcon].oMappedIcon.eIcon = SFXPowerWheelMapButtonIcon.PWBI_Icon_NONE;
-            SetMappingIcon(m_aPowerIcons[nIcon].oMappedIcon, eMapping);
-            oPanel.SetClipVisibility(m_aPowerIcons[nIcon].oMappedIcon.sPath, m_aPowerIcons[nIcon].pPower != None && m_aPowerIcons[nIcon].bMapped);
-            oPanel.SetClipVisibility(m_aPowerIcons[nIcon].sMappedBGPath, m_aPowerIcons[nIcon].pPower != None && m_aPowerIcons[nIcon].bMapped);
         }
+        EPWRefreshMappingIcons();
         SetInformationText("", "");
         SetUseText("");
         SetMapText("", 0, "", 0);
@@ -246,6 +253,7 @@ public function HandleInputEvent(BioGuiEvents Event, optional float fValue = 1.0
                         sMap = Left(sMap, nSelected) $ sTarget $ Mid(sMap, nSelected + 1);
                         sMap = Left(sMap, nAbsoluteSlot) $ sSource $ Mid(sMap, nAbsoluteSlot + 1);
                         oPanel.SetVariableString("EPWLE2Map", sMap);
+                        oPanel.SetVariableBool("EPWLE2SavePending", TRUE);
                         PlayGuiSound('HUDPowerWheelMapOnePower');
                     }
                     oPanel.SetVariableInt("EPWLE2Selected", -1);

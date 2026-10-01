@@ -8,6 +8,8 @@ public final function EPWRefreshMappingIcons()
     local int nSide;
     local bool bMapped;
 
+    // PC owns eight keyboard assignments and has no controller badge paths.
+    if (m_ePowerWheelMode == SFXPowerWheelMode.PWM_PC) { return; }
     if (m_pPlayerController == None)
     {
         return;
@@ -17,12 +19,19 @@ public final function EPWRefreshMappingIcons()
     {
         return;
     }
-    for (nSlot = 0; nSlot < m_oPowerIndices.aPlayer.Length; ++nSlot)
+    for (nSlot = 0; nSlot < m_aPowerIcons.Length; ++nSlot)
     {
-        oIcon = m_aPowerIcons[m_oPowerIndices.aPlayer[nSlot]];
+        oIcon = m_aPowerIcons[nSlot];
         eButton = SFXPowerWheelMapButtonIcon.PWBI_Icon_NONE;
         nSide = 0;
-        if (oIcon.pPower != None)
+        if (oIcon.bHenchIcon)
+        {
+            if (EPWHasPower(oIcon) && GetHenchmanMappedPower(oIcon.pPawn) == oIcon.nmPowerName)
+            {
+                eButton = oIcon.pPawn == m_pHench1Pawn ? SFXPowerWheelMapButtonIcon.PWBI_DPadLeft : SFXPowerWheelMapButtonIcon.PWBI_DPadRight;
+            }
+        }
+        else if (oIcon.pPower != None)
         {
             // AutoMapXbox/save data use class names; also accept the power name.
             // Read the actual input assignments, never the isolated setup icon.

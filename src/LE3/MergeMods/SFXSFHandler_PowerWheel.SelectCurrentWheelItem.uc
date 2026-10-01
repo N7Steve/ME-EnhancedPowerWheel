@@ -11,7 +11,7 @@ public final function SelectCurrentWheelItem(SFXPowerWheelMode eMode)
         {
             return;
         }
-        if (m_aPowerIcons[m_nCurrentPowerIconIndex].eState == SFXPowerWheelPowerState.PWPS_EmptySelectable || m_aPowerIcons[m_nCurrentPowerIconIndex].eState == SFXPowerWheelPowerState.PWPS_EmptySelected)
+        if (!EPWHasPower(m_aPowerIcons[m_nCurrentPowerIconIndex]))
         {
             return;
         }

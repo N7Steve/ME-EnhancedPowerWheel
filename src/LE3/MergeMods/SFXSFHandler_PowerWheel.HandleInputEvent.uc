@@ -37,10 +37,16 @@ public event function bool HandleInputEvent(BioGuiEvents Event, optional float f
     local array<int> aCooldowns;
     local array<SFXPowerWheelPowerState> aStates;
     local array<SFXPowerWheelPowerState> aDesiredStates;
+    local array<int> aSquadIndices;
+    local BioPawn pSquadPawn;
+    local GFxValue oWheel;
+    local int nSquadSelected;
+
+    oWheel = GetVariableObject(m_sWheelInnerPath);
 
     // 16 source characters (0-F, dash empty), selection and page.
     // Version 3 also stores a power identity for each occupied save slot.
-    if (m_ePowerWheelMode == SFXPowerWheelMode.PWM_Powers && m_aPowerIconInfo.Length > 0 && (m_aPowerIconInfo[0].Id == "" || m_aPowerIconInfo[0].Id == "P"))
+    if ((m_ePowerWheelMode == SFXPowerWheelMode.PWM_Powers || m_ePowerWheelMode == SFXPowerWheelMode.PWM_PC) && m_aPowerIconInfo.Length > 0 && (m_aPowerIconInfo[0].Id == "" || m_aPowerIconInfo[0].Id == "P"))
     {
         // P requests a redraw after native opening has finished on the next update.
         bRefreshPage = m_aPowerIconInfo[0].Id == "P";
@@ -178,7 +184,7 @@ public event function bool HandleInputEvent(BioGuiEvents Event, optional float f
             m_vLStickInput.Y = fValue;
             break;
         case BioGuiEvents.BIOGUI_EVENT_BUTTON_RTHUMB:
-            if (m_ePowerWheelMode == SFXPowerWheelMode.PWM_Powers)
+            if (m_ePowerWheelMode == SFXPowerWheelMode.PWM_Powers || m_ePowerWheelMode == SFXPowerWheelMode.PWM_PC)
             {
                 if (fValue < 0.0)
                 {
@@ -189,6 +195,7 @@ public event function bool HandleInputEvent(BioGuiEvents Event, optional float f
                 }
                 else
                 {
+                    if (oWheel != None) { oWheel.SetNumber("EPWSquadSelected", 0.0); }
                     nPage = 1 - nPage;
                     bFadePage = TRUE;
                     PlayGuiSound('BrowserSegmentChange');
@@ -197,7 +204,7 @@ public event function bool HandleInputEvent(BioGuiEvents Event, optional float f
             }
             return Super(SFXGUIMovie).HandleInputEvent(Event, fValue);
         case BioGuiEvents.BIOGUI_EVENT_BUTTON_LTHUMB:
-            if (m_ePowerWheelMode == SFXPowerWheelMode.PWM_Powers)
+            if (m_ePowerWheelMode == SFXPowerWheelMode.PWM_Powers || m_ePowerWheelMode == SFXPowerWheelMode.PWM_PC)
             {
                 if (fValue < 0.0)
                 {
@@ -210,11 +217,56 @@ public event function bool HandleInputEvent(BioGuiEvents Event, optional float f
             }
             return Super(SFXGUIMovie).HandleInputEvent(Event, fValue);
         case BioGuiEvents.BIOGUI_EVENT_BUTTON_LB:
-            if (m_ePowerWheelMode == SFXPowerWheelMode.PWM_Powers)
+            if (m_ePowerWheelMode == SFXPowerWheelMode.PWM_Powers || m_ePowerWheelMode == SFXPowerWheelMode.PWM_PC)
             {
+                // Each companion owns its five physical slots on the main page.
+                if (nPage == 0 && m_nCurrentPowerIconIndex >= 0 && m_nCurrentPowerIconIndex < m_aPowerIcons.Length && oWheel != None)
+                {
+                    if (m_oPowerIndices.aHench1.Find(m_nCurrentPowerIconIndex) >= 0 && m_pHench1Pawn != None)
+                    {
+                        aSquadIndices = m_oPowerIndices.aHench1;
+                        pSquadPawn = m_pHench1Pawn;
+                    }
+                    else if (m_oPowerIndices.aHench2.Find(m_nCurrentPowerIconIndex) >= 0 && m_pHench2Pawn != None)
+                    {
+                        aSquadIndices = m_oPowerIndices.aHench2;
+                        pSquadPawn = m_pHench2Pawn;
+                    }
+                    if (pSquadPawn != None)
+                    {
+                        sSelected = "X";
+                        nSquadSelected = int(oWheel.GetNumber("EPWSquadSelected")) - 1;
+                        nSourceSlot = aSquadIndices.Find(nSquadSelected);
+                        if (nSourceSlot < 0)
+                        {
+                            // Moving to another companion starts a new selection.
+                            oWheel.SetNumber("EPWSquadSelected", 0.0);
+                            if (EPWHasPower(m_aPowerIcons[m_nCurrentPowerIconIndex]))
+                            {
+                                oWheel.SetNumber("EPWSquadSelected", float(m_nCurrentPowerIconIndex + 1));
+                                PlayGuiSound('HUDPowerWheelQueueingHighlightedPowerForActivation');
+                            }
+                        }
+                        else
+                        {
+                            oWheel.SetNumber("EPWSquadSelected", 0.0);
+                            nIcon = m_nCurrentPowerIconIndex;
+                            if (nSquadSelected != nIcon && EPWHasPower(m_aPowerIcons[nSquadSelected]))
+                            {
+                                LeavePowerIcon(nIcon, TRUE);
+                                EPWSquadLayout(pSquadPawn, aSquadIndices, nSourceSlot, aSquadIndices.Find(nIcon));
+                                EPWRefreshMappingIcons();
+                                HoverPowerIcon(nIcon, TRUE);
+                                PlayGuiSound('HUDPowerWheelQueueingHighlightedPowerForActivation');
+                            }
+                        }
+                        break;
+                    }
+                }
                 nSlot = m_oPowerIndices.aPlayer.Find(m_nCurrentPowerIconIndex);
                 if (nSlot >= 0)
                 {
+                    if (oWheel != None) { oWheel.SetNumber("EPWSquadSelected", 0.0); }
                     nAbsoluteSlot = nPage * 8 + nSlot;
                     nSelectedSlot = InStr("ABCDEFGHIJKLMNOP", sSelected);
                     if (nSelectedSlot == -1)
@@ -272,7 +324,7 @@ public event function bool HandleInputEvent(BioGuiEvents Event, optional float f
         case BioGuiEvents.BIOGUI_EVENT_BUTTON_LB_RELEASE:
         case BioGuiEvents.BIOGUI_EVENT_BUTTON_LTHUMB_RELEASE:
         case BioGuiEvents.BIOGUI_EVENT_BUTTON_RTHUMB_RELEASE:
-            if (m_ePowerWheelMode == SFXPowerWheelMode.PWM_Powers)
+            if (m_ePowerWheelMode == SFXPowerWheelMode.PWM_Powers || m_ePowerWheelMode == SFXPowerWheelMode.PWM_PC)
             {
                 return TRUE;
             }
@@ -281,7 +333,7 @@ public event function bool HandleInputEvent(BioGuiEvents Event, optional float f
             return Super(SFXGUIMovie).HandleInputEvent(Event, fValue);
     }
 
-    if (m_ePowerWheelMode == SFXPowerWheelMode.PWM_Powers && m_aPowerIconInfo.Length > 0)
+    if ((m_ePowerWheelMode == SFXPowerWheelMode.PWM_Powers || m_ePowerWheelMode == SFXPowerWheelMode.PWM_PC) && m_aPowerIconInfo.Length > 0)
     {
         m_aPowerIconInfo[0].Id = sMap $ sSelected $ string(nPage);
         if (bFadePage)
@@ -430,6 +482,13 @@ public event function bool HandleInputEvent(BioGuiEvents Event, optional float f
             m_aPowerIcons[nIcon].SetSelected(FALSE);
         }
 
+    }
+    // Restore squad content only after native setup and full-roster restoration.
+    // This also reapplies its saved layout when R3 returns to the main page.
+    if (nPage == 0)
+    {
+        EPWSquadLayout(m_pHench1Pawn, m_oPowerIndices.aHench1);
+        EPWSquadLayout(m_pHench2Pawn, m_oPowerIndices.aHench2);
     }
     EPWRefreshMappingIcons();
     EPWUpdateSuggestedDisplay();

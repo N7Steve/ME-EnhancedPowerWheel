@@ -9,12 +9,13 @@ public event function WheelVisibilityChanged(bool bVisible)
     // Reset transition state on both opening and closing, including mid-fade.
     oPanel.SetVariableBool("EPWLE2Open", bVisible && m_ePowerWheelMode == SFXPowerWheelMode.PWM_Powers);
     oPanel.SetVariableInt("EPWLE2FadePhase", 0);
+    oPanel.SetVariableBool("EPWLE2SavePending", FALSE);
     oPanel.SetVariableFloat("EPWLE2FadeAlpha", 100.0);
     for (nIcon = 0; nIcon < m_aPowerIcons.Length; ++nIcon)
     {
         oPanel.SetVariableFloat(m_aPowerIcons[nIcon].sPath $ "._alpha", 100.0);
         oPanel.SetVariableFloat(m_aPowerIcons[nIcon].oMappedIcon.sPath $ "._alpha", 100.0);
-        oPanel.SetVariableFloat(m_aPowerIcons[nIcon].sMappedBGPath $ "._alpha", 100.0);
+        oPanel.SetVariableFloat("mainContent." $ m_aPowerIcons[nIcon].sMappedBGPath $ "._alpha", 100.0);
     }
     EPWUpdateUI(FALSE);
     if (!bVisible && m_ePowerWheelMode == SFXPowerWheelMode.PWM_Powers)
@@ -109,5 +110,9 @@ public event function WheelVisibilityChanged(bool bVisible)
         HandleInputEvent(BioGuiEvents.BIOGUI_EVENT_BUTTON_LTHUMB, -1.0);
         // Recheck after native opening on the first forwarded input event.
         oPanel.SetVariableBool("EPWLE2Pending", TRUE);
+    }
+    if (!bVisible && m_ePowerWheelMode == SFXPowerWheelMode.PWM_Powers)
+    {
+        EPWRefreshMappingIcons(FALSE);
     }
 }

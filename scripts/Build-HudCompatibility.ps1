@@ -7,7 +7,7 @@ param(
 $ErrorActionPreference = 'Stop'
 $repo = Split-Path $PSScriptRoot -Parent
 if (!$MeleRoot) { throw 'Set MELE_ROOT or pass -MeleRoot.' }
-if (!$Destination) { $Destination = Join-Path $repo ('build/HUDCompatibility-v0.3-' + (Get-Date -Format 'yyyyMMdd-HHmmss')) }
+if (!$Destination) { $Destination = Join-Path $repo ('build/HUDCompatibility-v0.4-' + (Get-Date -Format 'yyyyMMdd-HHmmss')) }
 $destinationPath = [IO.Path]::GetFullPath($Destination)
 $source = Join-Path $repo 'src/LE3/HUDCompatibility'
 $helper = Join-Path $repo 'tools/PackageResearch/bin/WinRelease/net8.0/PackageResearch.dll'

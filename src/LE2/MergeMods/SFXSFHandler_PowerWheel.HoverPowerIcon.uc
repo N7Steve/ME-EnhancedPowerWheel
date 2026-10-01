@@ -38,6 +38,10 @@ public event function HoverPowerIcon(int nIconIndex, bool bSkipTransition)
     }
     PlayGuiSound('HUDPowerWheelChangeHighlightedPower');
     m_nCurrentPowerIconIndex = nIconIndex;
+    if (m_ePowerWheelMode == SFXPowerWheelMode.PWM_Powers)
+    {
+        EPWUpdateSuggestedDisplay();
+    }
     if (oIcon.pPower != None)
     {
         nmPower = oIcon.pPower.BaseName;

@@ -13,6 +13,8 @@
               "SFXSFHandler_PowerWheel.EPWPlayerPowers.uc",
               "SFXSFHandler_PowerWheel.EPWPowerKey.uc",
               "SFXSFHandler_PowerWheel.EPWSaveMap.uc",
+              "SFXSFHandler_PowerWheel.EPWHasPower.uc",
+              "SFXSFHandler_PowerWheel.EPWSquadLayout.uc",
               "SFXSFHandler_PowerWheel.EPWUpdateSwitchHint.uc",
               "SFXSFHandler_PowerWheel.EPWTraceHelp.uc",
               "SFXSFHandler_PowerWheel.EPWUpdateSuggestedDisplay.uc",
@@ -45,6 +47,37 @@
           "entryname": "SFXSFHandler_PowerWheel.LeavePowerIcon",
           "scriptupdate": {
             "scriptfilename": "SFXSFHandler_PowerWheel.LeavePowerIcon.uc"
+          }
+        },
+        {
+          "entryname": "SFXSFHandler_PCPowerWheel",
+          "addtoclassorreplace": {
+            "scriptfilenames": [
+              "SFXSFHandler_PCPowerWheel.EPWPCDropTarget.uc",
+              "SFXSFHandler_PCPowerWheel.EPWPCFinishDrag.uc",
+              "SFXSFHandler_PCPowerWheel.EPWPCTick.uc",
+              "SFXSFHandler_PCPowerWheel.EPWPCPresentation.uc",
+              "SFXSFHandler_PCPowerWheel.Update.uc",
+              "SFXSFHandler_PCPowerWheel.HandleInputEvent.uc"
+            ]
+          }
+        },
+        {
+          "entryname": "SFXSFHandler_PCPowerWheel.ExInt_IconMouseDown",
+          "scriptupdate": {
+            "scriptfilename": "SFXSFHandler_PCPowerWheel.ExInt_IconMouseDown.uc"
+          }
+        },
+        {
+          "entryname": "SFXSFHandler_PCPowerWheel.ExInt_IconMouseUp",
+          "scriptupdate": {
+            "scriptfilename": "SFXSFHandler_PCPowerWheel.ExInt_IconMouseUp.uc"
+          }
+        },
+        {
+          "entryname": "SFXSFHandler_PCPowerWheel.WheelVisibilityChanged",
+          "scriptupdate": {
+            "scriptfilename": "SFXSFHandler_PCPowerWheel.WheelVisibilityChanged.uc"
           }
         }
       ]

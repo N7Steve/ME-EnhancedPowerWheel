@@ -1,0 +1,130 @@
+LE3 PC update v1.10.3
+-----------------------------
+This export includes the existing controller implementation and adds the PC
+power-selection dashboard. Compilation and structural checks are automated;
+The owner reports v1.10.2 works well, including companion reordering.
+This update uses actual PC clip visibility and physical companion ownership
+for green reorder outlines on the source and hovered valid destination.
+The Space keycap and Swap bar label are completely removed. Space still
+switches pages. The long Space/drag/click help paragraph remains removed.
+The new outlines require an in-game check on both companion sides and holes.
+
+Changed installed file: Game/ME3/BioGame/CookedPCConsole/SFXGame.pcc only.
+Merge targets: SFXSFHandler_PowerWheel and SFXSFHandler_PCPowerWheel.
+No Startup.pcc, extracted SWF, input configuration or direct PCC copy is used.
+Build/export do not install. Import this folder through ME3Tweaks Mod Manager.
+Before installing, retain Mod Manager's managed LE3 basegame backup, record
+installed mods and back up the test save. Uninstall by restoring that backup
+and reapplying desired mods; restore the save backup to undo saved ordering.
+
+PC controls while the lower power-selection bar is open:
+- Space alternates the two pages, with the existing power-icon fade.
+- Click an occupied power to use it. Empty slots do not activate or show names.
+- Hold left mouse and drag to move to a hole or swap with an occupied slot.
+- While dragging Shepard's power, press Space, wait for the fade, then release
+  on the other page. The captured power stays attached to the cursor.
+- Each companion's powers can move only within that companion's five slots.
+  PC drops apply that companion's persistent layout using physical slots.
+- Release outside a valid destination to cancel. Closing or losing focus
+  cancels; releasing during the page fade also cancels.
+- Dragging onto a native upper quickslot keeps vanilla assignment behavior.
+  Existing upper-quickslot drags and weapon selection retain their native path.
+
+PC and controller reuse the same save layout. Opening always starts on page 0.
+The shared combo outlines, availability refresh, normal NotSuggested artwork,
+empty-slot handling and contextual green destination borders run in PC mode.
+Keyboard assignment labels read the eight existing quickslots; they do not
+create new bindings. HUD proportions and input settings are not adjusted.
+
+Test before accepting this checkpoint: Space press/hold/release; opening
+without hover; occupied/empty click; drag move/swap on both pages; cross-page
+drag; cancel outside/on another character; both companion sides; cooldown,
+ammo and dead/blocked companions; native mapping and key labels on both pages;
+weapons; close mid-fade/mid-drag; focus loss; reopen; save/quit/reload; controller
+R3/LB and first-open regression checks. Check absence of all PC Space help.
+The read-only wheel-memory script also captures bounded EPW16 INPUT PC records,
+including the last drop's source, destination, slot counts and result.
+
+Earlier controller development notes
+------------------------------------
+Enhanced Power Wheel LE3 v1.9.30 - Compatible green move targets test build
+
+Import this folder into ME3Tweaks Mod Manager, then install through the manager.
+The build/export scripts do not install anything.
+
+Changed game files: only Game/ME3/BioGame/CookedPCConsole/SFXGame.pcc,
+merged by Mod Manager. The wheel handler class is recompiled.
+Before installation, verify Mod Manager's managed LE3 basegame backup and
+restore path, record the current installed mods and SFXGame.pcc hash, and
+keep a separate copy of the test save.
+Uninstall: restore the managed basegame backup and reapply desired mods,
+including the previous wheel checkpoint if wanted. Do not copy a PCC over
+the game manually. Restore the pre-test save to undo saved squad ordering.
+Plot integers 740300-740353 store squad ordering; after uninstall this data
+is inert. Shepard's existing layout block is unchanged.
+
+Main wheel squad controls:
+- Hover an occupied slot and press LB to pick the companion's power.
+- Hover another slot in that same companion's section and press LB to
+  place it in a hole or swap it with the power there.
+- LB on the picked slot cancels. LB in a different character's section
+  starts a selection there; it never transfers powers between characters.
+- Closing the wheel or switching pages cancels a pending squad selection.
+- Empty slots remain destinations for LB but cannot highlight or activate
+  as usable powers with A, and show no Use/Map or stale description.
+
+The owner confirmed ordering works, but v1.9.22 still resets on reopening.
+Live read-only diagnostics confirm Garrus's layout is written in the plot
+table; the failure is restoration. v1.9.23 restores squad content after native
+player reconstruction, including R3 back to page 0, and accepts real power
+references despite transient empty icon states. Native availability is refreshed.
+Write/load diagnostics are retained separately. Existing saved keys are reused.
+The owner confirmed v1.9.23 fixes the reported order reset. A separate
+save/quit/reload report has not been supplied. Garrus Armor Piercing Ammo
+still initially lacks its image until hover/move. v1.9.24 initializes each
+occupied state's image loader during squad reconstruction, without changing
+native availability. Check first opening without hover, hover/leave,
+R3 away/back and reopening, including ammo/cooldown and the other companions.
+Compilation and inheritance checks pass; the image fix needs game testing.
+Check both squad sides: A on empty slots, move to empty, swap occupied,
+cancel, native use and mapping badge after a move, cooldown/dead companion,
+close/reopen, R3 away/back, change squad position, and save/quit/reload.
+Retest Shepard opening, both pages, LB ordering and usable cooldown powers.
+Persistence supports the nine companion tags declared by installed LE3;
+custom companion tags have no persistent bank in this proof of concept.
+
+Combo outline change v1.9.25:
+Hover a primer to highlight compatible visible detonators in red, with a
+0.2-second smooth fade in and the existing pulse. Hover a detonator-only
+power: no primer outlines. Dual-role powers still highlight their compatible
+detonators as primers. Check rapid hover changes, squad powers, R3 page
+switching and close/reopen for stale outlines. Runtime confirmation pending.
+
+v1.9.26: changing hover fades departing red outlines out over 0.2 seconds
+from their current alpha, including when entering non-combo or empty slots.
+Closing/rebuilding clears all pending fades immediately. Test rapid hover
+changes, departure during entry fade, R3 and closing during the exit fade.
+
+v1.9.27: empty slots bypass native SetHover/SetSelected on exit and retain
+EmptySelectable on entry/exit without redundant SetState refreshes. Check
+empty -> occupied, empty -> empty, both pages, squad holes, LB placement,
+R3 and close/reopen: no empty-slot growth/shrink animation. Runtime pending.
+
+v1.9.28: while a Shepard or squad power is picked for moving, every visible
+hovered slot receives the same green outline as the source, including empty
+slots. The source remains marked. Destination borders follow hover and clear
+after place/swap/cancel. Movement rules between characters are unchanged.
+Check both pages, squad selection, empty slots and R3. Runtime pending.
+
+v1.9.29: squad rebuild invalidates the NotSuggested presentation cache.
+Image loaders receive the correct cached frame before SetIcon, which checks
+the old frame first. The active normal-state proxy image is explicitly visible.
+Native availability/ammo effects are unchanged. Check equipped Armor Piercing
+Ammo/Warp Ammo before touching the stick, then hover/leave, move, R3 and reopen.
+Loader diagnostics are retained for read-only investigation. Runtime pending.
+
+v1.9.30: green hover borders only mark destinations owned by the selected
+character: Shepard across both pages, or the selected companion's own slots.
+Empty destinations in that section still qualify; the source remains marked.
+Check no green border on other characters, and retained place/swap/cancel.
+This supersedes v1.9.28's every-section hover border. Runtime pending.

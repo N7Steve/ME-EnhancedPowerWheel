@@ -4,6 +4,8 @@ Date: 2026-09-30. Status: structural conflict identified; minimal bridge compile
 
 Follow-up: a separate original DLC has now been compiled and exported as [compatibility POC 0.1](../architecture/hud-compatibility-poc-v0.1.md). That document records the artifact, static checks, installation and rollback. The initial in-memory experiment below remains research evidence; owner gameplay validation is still pending.
 
+PC follow-up (2026-10-01): the owner reports missing PC slots with HUD and requests PC compatibility. [Patch 0.4](../architecture/hud-compatibility-pc-v0.4.md) adds an original PC subclass and movie registration alongside the existing controller bridge. It retains HUD Update/camera behavior and explicitly invokes EPW's PC Update/input; static checks pass, combined gameplay remains pending. The original controller-only recommendation below predates this requested scope.
+
 ## Inputs and scope
 
 Inspected the owner's `D:\Modding\M3Tweaks Mod Manager\LE3\HUD Enhancements` folder (DropTheSquid, moddesc version 1.1) and the currently installed LE3 `SFXGame.pcc`. The installed package contains EPW 1.9.9 opening logic and Dynamic Time Wheels code; it is not a pristine baseline. HUD Enhancements was absent from the installed game's DLC directory during inspection, so this investigation compares library content with the installed base package, rather than reproducing an active combined install.

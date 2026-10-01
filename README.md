@@ -2,6 +2,12 @@
 
 Enhanced Power Wheel is an experimental mod project for the Power Wheel in Mass Effect Legendary Edition. Development starts with LE3. Longer term, the project aims to improve power capacity, ordering, navigation, and the information shown on the wheel.
 
+LE3 v1.10.0 adds a PC proof of concept: Space switches the two lower power bars, dragging moves/swaps powers within a character's slots, and Shepard can cross pages while dragging. It shares saved ordering, icon fades and combo outlines with the controller version. Compilation and structural checks pass against installed LE3 and the local reference; PC gameplay validation is pending. See [PC implementation, export and test plan](docs/architecture/pc-power-bar-v1.10.0.md). Build/export do not install the mod.
+
+The owner reports v1.10.2 works well, including companion reordering. Version 1.10.3 aligns green reorder outlines with PC clip visibility and physical companion slots, and removes the Space / Swap bar indicator completely. Space still switches pages. The new visual changes await an in-game test. See [PC companion outlines and removal of Space help](docs/architecture/pc-outline-v1.10.3.md).
+
+HUD Enhancements 1.1 uses separate handlers that bypass EPW's PC frame update. Compatibility patch 0.4 adds a PC bridge alongside the existing controller bridge and keeps HUD radar, camera handling and graphics. It requires EPW 1.10.3; replace the previous compatibility DLC and install this patch last through Mod Manager. Combined gameplay validation is pending. See [HUD compatibility for PC](docs/architecture/hud-compatibility-pc-v0.4.md).
+
 ## LE3 checkpoint: two-page ordering wheel
 
 Version 1.6 extends the directional combo outline to documented LE3 single-player primers and the loaded powers' actual detonator arrays. Visible squad powers participate alongside Shepard's powers. A red border marks a potential detonator for the hovered primer; a violet border marks a potential primer for the hovered detonator. Version 1.7 closes the missing upper-left outline segment reported in game. Conditional primers still require their combat conditions. See [combo hover implementation](docs/architecture/combo-hover-v1.6.md). The exported Mod Manager folder is under `dist/`; build scripts do not install it.
@@ -44,6 +50,12 @@ The project owner confirmed the ordering behavior through the LT version in game
 LE2 version 0.3.2 switches pages with R3 and uses the native colored R3/LB controller-library images. LB ordering, the accepted fade, blue selection outline and First Aid counter fix remain. At the owner's request, all movie FPS/UI-speed corrections from 0.3.1 are removed; timing belongs to the game and independent mods. See [R3/color checkpoint and artifact](docs/architecture/le2-r3-color-icons-v0.3.2.md).
 
 The new export changes only SFXGame.pcc and contains no Startup assets. If 0.3.1's movie merge was installed, its Startup edits need restoration through Mod Manager followed by reapplying desired mods; the script-only update cannot undo those asset edits. The export documents that recovery and its own backup/removal plan. Build/export do not install. New R3/icon rendering awaits owner confirmation.
+
+LE2 version 0.3.3 synchronizes green hover after moves/swaps, hides red NotSuggested artwork behind a default-off boolean, and refreshes LB/RB/Y badges from live input assignments on both pages. Installed/vanilla-backup compilation and structural checks pass; gameplay confirmation is pending. See [hover/mapping checkpoint and export](docs/architecture/le2-hover-mapping-v0.3.3.md).
+
+The owner reports 0.3.3 leaves badge overlays visible after closing, retains red warning artwork, and leaves gaps between help rows. Version 0.3.4 explicitly clears badges/backgrounds after close, zeros the warning clip's own alpha and dynamically packs visible help into aligned 28-pixel rows. Installed/vanilla validation passes; these corrections await gameplay confirmation. See [overlay/help checkpoint and export](docs/architecture/le2-overlay-help-v0.3.4.md).
+
+The owner confirms 0.3.4 works very well. LE2 version 0.4 adds save-specific layout persistence using stable power identities and plot integers 7400–7416, preserving that visual baseline. It reads the loaded save rather than carrying another save's Flash cache. Installed/vanilla compilation passes; save/quit/reload confirmation is pending. See [save-ordering checkpoint and export](docs/architecture/le2-save-ordering-v0.4.md).
 
 With local toolchain paths configured, run `scripts/Inspect-Le2.ps1`, `scripts/Build-Le2.ps1` and `scripts/Export-Le2Folder.ps1`. During recovery, `Build-Le2.ps1 -ValidationPackagePath <backup SFXGame.pcc>` validates against the backup without modifying it or the installed game.
 

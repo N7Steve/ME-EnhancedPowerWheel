@@ -8,11 +8,12 @@ if (!(Test-Path -LiteralPath $descriptor -PathType Leaf) -or !(Test-Path -Litera
     throw 'Run scripts/Build-Le3.ps1 first.'
 }
 $mergeHash = (Get-FileHash -LiteralPath $merge).Hash
-if (!$Destination) { $Destination = Join-Path $repo ('dist/EnhancedPowerWheel-LE3-CooldownOpening-v1.9.20-' + $mergeHash.Substring(0, 12)) }
+if (!$Destination) { $Destination = Join-Path $repo ('dist/EnhancedPowerWheel-LE3-PCOutline-v1.10.3-' + $mergeHash.Substring(0, 12)) }
 $destinationPath = [IO.Path]::GetFullPath($Destination)
 if (Test-Path -LiteralPath $destinationPath) { throw "Destination already exists: $destinationPath" }
 New-Item -ItemType Directory -Path (Join-Path $destinationPath 'MergeMods') -Force | Out-Null
 Copy-Item -LiteralPath $descriptor -Destination $destinationPath
+Copy-Item -LiteralPath (Join-Path $repo 'src/LE3/INSTALL.txt') -Destination $destinationPath
 Copy-Item -LiteralPath $merge -Destination (Join-Path $destinationPath 'MergeMods')
 if ($mergeHash -ne (Get-FileHash -LiteralPath (Join-Path $destinationPath 'MergeMods/EnhancedPowerWheel.m3m')).Hash) {
     throw 'Exported merge hash differs from the build.'

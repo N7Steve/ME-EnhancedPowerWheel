@@ -10,10 +10,13 @@ public event function WheelVisibilityChanged(bool bVisible)
     local ASDisplayInfo oDisplay;
     local float fIconAlpha;
 
+    oWheel = GetVariableObject(m_sWheelInnerPath);
+    if (oWheel != None) { oWheel.SetNumber("EPWSquadSelected", 0.0); }
+
     // Native opening can repopulate vanilla icons before the pending redraw.
     // Keep only power/mapping clips transparent until Update builds page 0.
     // Closing (including mid-fade) restores their normal alpha.
-    fIconAlpha = bVisible && m_ePowerWheelMode == SFXPowerWheelMode.PWM_Powers && m_aPowerIconInfo.Length > 0 ? 0.0 : 100.0;
+    fIconAlpha = bVisible && (m_ePowerWheelMode == SFXPowerWheelMode.PWM_Powers || m_ePowerWheelMode == SFXPowerWheelMode.PWM_PC) && m_aPowerIconInfo.Length > 0 ? 0.0 : 100.0;
     for (nIcon = 0; nIcon < m_aPowerIcons.Length; ++nIcon)
     {
         oIcon = m_aPowerIcons[nIcon];
@@ -24,7 +27,7 @@ public event function WheelVisibilityChanged(bool bVisible)
         oDisplay.Alpha = fIconAlpha;
         oIcon.SetDisplayInfo(oDisplay);
 
-        oMapped = GetVariableObject(oIcon.oMappedIcon.sPath);
+        oMapped = oIcon.oMappedIcon.sPath != "" ? GetVariableObject(oIcon.oMappedIcon.sPath) : None;
         if (oMapped != None)
         {
             oDisplay = oMapped.GetDisplayInfo();
@@ -32,7 +35,7 @@ public event function WheelVisibilityChanged(bool bVisible)
             oDisplay.Alpha = fIconAlpha;
             oMapped.SetDisplayInfo(oDisplay);
         }
-        oMapped = GetVariableObject(oIcon.sMappedBGPath);
+        oMapped = oIcon.sMappedBGPath != "" ? GetVariableObject(oIcon.sMappedBGPath) : None;
         if (oMapped != None)
         {
             oDisplay = oMapped.GetDisplayInfo();
@@ -45,7 +48,7 @@ public event function WheelVisibilityChanged(bool bVisible)
     if (!bVisible)
     {
         EPWUpdateSwitchHint(FALSE);
-        bHadOrderState = m_ePowerWheelMode == SFXPowerWheelMode.PWM_Powers && m_aPowerIconInfo.Length > 0 && m_aPowerIconInfo[0].Id != "";
+        bHadOrderState = (m_ePowerWheelMode == SFXPowerWheelMode.PWM_Powers || m_ePowerWheelMode == SFXPowerWheelMode.PWM_PC) && m_aPowerIconInfo.Length > 0 && m_aPowerIconInfo[0].Id != "";
         if (m_ePowerWheelMode == SFXPowerWheelMode.PWM_Weapons || m_ePowerWheelMode == SFXPowerWheelMode.PWM_PC)
         {
             LeaveWeaponIcon(m_nCurrentWeaponIconIndex);
@@ -133,7 +136,7 @@ public event function WheelVisibilityChanged(bool bVisible)
         }
         BioHintSystem(m_pPlayerController.HintSystem).GeneratePowerWheelTutorialHint(bPowerWheel, bWeaponWheel);
         EPWUpdateSwitchHint(TRUE);
-        if (m_ePowerWheelMode == SFXPowerWheelMode.PWM_Powers && m_aPowerIconInfo.Length > 0)
+        if ((m_ePowerWheelMode == SFXPowerWheelMode.PWM_Powers || m_ePowerWheelMode == SFXPowerWheelMode.PWM_PC) && m_aPowerIconInfo.Length > 0)
         {
             // Native opening can restore vanilla icons after this callback returns.
             m_aPowerIconInfo[0].Id = "P";

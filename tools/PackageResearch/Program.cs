@@ -93,6 +93,10 @@ static int Run(string[] args)
         if (!symbols.Initialize(usop)) throw new InvalidOperationException($"Symbol initialization failed: {symbols.InitializationLog}");
         var classData = target.Exports.Where(e => e.IsClass).ToDictionary(e => e.UIndex, e => SHA256.HashData(e.Data));
         var le2WheelLayout = target.Game == MEGame.LE2 ? WheelLayout(target) : null;
+        var le3WheelLayouts = target.Game == MEGame.LE3
+            ? new[] { "SFXSFHandler_PowerWheel", "SFXSFHandler_PCPowerWheel" }
+                .ToDictionary(name => name, name => WheelLayout(target, name))
+            : null;
         var manifestPath = Path.GetFullPath(args[2]);
         using var manifest = JsonDocument.Parse(File.ReadAllText(manifestPath));
         if (manifest.RootElement.GetProperty("game").GetString() != target.Game.ToString())
@@ -171,6 +175,13 @@ static int Run(string[] args)
         }
         if (target.Game == MEGame.LE3 && changedClasses.Any(index => target.GetUExport(index).InstancedFullPath == "SFXSFHandler_PowerWheel"))
         {
+            foreach (var (name, layout) in le3WheelLayouts!)
+            {
+                var layoutSuccess = layout.SequenceEqual(WheelLayout(target, name));
+                Console.WriteLine($"{(layoutSuccess ? "PASS" : "FAIL")}: {name} native property declarations unchanged.");
+                if (!layoutSuccess) errors++;
+                results.Add(new { check = name + "-native-layout", success = layoutSuccess });
+            }
             var virtualSuccess = AuditWheel(target);
             if (!virtualSuccess) errors++;
             results.Add(new { check = "wheel-virtual-inheritance", success = virtualSuccess });
@@ -238,20 +249,23 @@ static bool AuditWheel(IMEPackage package)
     var success = child.VirtualFunctionTable.Length >= parent.VirtualFunctionTable.Length && missing.Count == 0;
     Console.WriteLine($"{(success ? "PASS" : "FAIL")}: wheel virtual inheritance: base {parent.VirtualFunctionTable.Length}, PC {child.VirtualFunctionTable.Length}; missing inherited functions {missing.Count}.");
     foreach (var entry in missing) Console.WriteLine($"Missing in PC wheel: {entry?.InstancedFullPath}");
-    var virtualIndices = parent.VirtualFunctionTable.ToHashSet();
-    foreach (var export in package.Exports.Where(e => e.ClassName == "Function" && e.idxLink == parentExport.UIndex && e.ObjectName.Name.StartsWith("EPW", StringComparison.Ordinal)))
+    foreach (var classExport in new[] { parentExport, childExport })
     {
-        var function = ObjectBinary.From<UFunction>(export);
-        var final = function.FunctionFlags.HasFlag(UnrealFlags.EFunctionFlags.Final);
-        var isVirtual = virtualIndices.Contains(export.UIndex);
-        Console.WriteLine($"{(final && !isVirtual ? "PASS" : "FAIL")}: {export.ObjectName.Name}: final={final}, virtual={isVirtual}");
-        success &= final && !isVirtual;
+        var virtualIndices = ObjectBinary.From<UClass>(classExport).VirtualFunctionTable.ToHashSet();
+        foreach (var export in package.Exports.Where(e => e.ClassName == "Function" && e.idxLink == classExport.UIndex && e.ObjectName.Name.StartsWith("EPW", StringComparison.Ordinal)))
+        {
+            var function = ObjectBinary.From<UFunction>(export);
+            var final = function.FunctionFlags.HasFlag(UnrealFlags.EFunctionFlags.Final);
+            var isVirtual = virtualIndices.Contains(export.UIndex);
+            Console.WriteLine($"{(final && !isVirtual ? "PASS" : "FAIL")}: {export.InstancedFullPath}: final={final}, virtual={isVirtual}");
+            success &= final && !isVirtual;
+        }
     }
     return success;
 }
 
-static string[] WheelLayout(IMEPackage package) => package.Exports
-    .Where(e => e.InstancedFullPath.StartsWith("SFXSFHandler_PowerWheel.", StringComparison.Ordinal)
+static string[] WheelLayout(IMEPackage package, string className = "SFXSFHandler_PowerWheel") => package.Exports
+    .Where(e => e.InstancedFullPath.StartsWith(className + ".", StringComparison.Ordinal)
         && e.ClassName.EndsWith("Property", StringComparison.Ordinal)
         && (e.Parent?.IsClass == true || e.Parent?.ClassName == "ScriptStruct"))
     .Select(e =>

@@ -26,6 +26,11 @@ public final function EPWUpdateUI(bool bShow)
     bShow = bShow && m_ePowerWheelMode == SFXPowerWheelMode.PWM_Powers && oPanel.GetVariableBool("EPWLE2Open");
     nSelected = oPanel.GetVariableInt("EPWLE2Selected");
     nPage = oPanel.GetVariableInt("EPWLE2Page");
+    if (bShow)
+    {
+        EPWRefreshMappingIcons();
+        EPWUpdateSuggestedDisplay();
+    }
     sNativeHelp = Caps(oPanel.GetVariableString(m_sUseTextPath $ ".text") $ " " $ oPanel.GetVariableString(m_sMapText1Path $ ".text") $ " " $ oPanel.GetVariableString(m_sMapText2Path $ ".text"));
     if (InStr(sNativeHelp, "USE POWER") >= 0 || InStr(sNativeHelp, "MAP POWER") >= 0)
     {
@@ -97,6 +102,7 @@ public final function EPWUpdateUI(bool bShow)
             oPanel.SetVariableBool(sButtonPath $ ".selectable", FALSE);
         }
     }
+    EPWLayoutHelp(bShow);
     for (nSlot = 0; nSlot < m_oPowerIndices.aPlayer.Length; ++nSlot)
     {
         nIcon = m_oPowerIndices.aPlayer[nSlot];
