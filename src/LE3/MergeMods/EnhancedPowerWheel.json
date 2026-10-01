@@ -14,6 +14,7 @@
               "SFXSFHandler_PowerWheel.EPWPowerKey.uc",
               "SFXSFHandler_PowerWheel.EPWSaveMap.uc",
               "SFXSFHandler_PowerWheel.EPWUpdateSwitchHint.uc",
+              "SFXSFHandler_PowerWheel.EPWTraceHelp.uc",
               "SFXSFHandler_PowerWheel.EPWUpdateSuggestedDisplay.uc",
               "SFXSFHandler_PowerWheel.EPWRefreshMappingIcons.uc",
               "SFXSFHandler_PowerWheel.Update.uc",
@@ -32,6 +33,12 @@
           "entryname": "SFXSFHandler_PowerWheel.HoverPowerIcon",
           "scriptupdate": {
             "scriptfilename": "SFXSFHandler_PowerWheel.HoverPowerIcon.uc"
+          }
+        },
+        {
+          "entryname": "SFXSFHandler_PowerWheel.SetMapText",
+          "scriptupdate": {
+            "scriptfilename": "SFXSFHandler_PowerWheel.SetMapText.uc"
           }
         },
         {

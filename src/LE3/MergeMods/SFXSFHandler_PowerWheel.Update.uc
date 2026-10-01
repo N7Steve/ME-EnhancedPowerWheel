@@ -62,6 +62,7 @@ public event function Update(float fDeltaT)
         }
     }
     EPWUpdateSwitchHint(m_aPowerIconInfo.Length > 0 && m_aPowerIconInfo[0].Id != "");
+    EPWTraceHelp();
     if (m_ePowerWheelMode != SFXPowerWheelMode.PWM_Powers)
     {
         return;

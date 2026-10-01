@@ -408,6 +408,10 @@ public event function bool HandleInputEvent(BioGuiEvents Event, optional float f
         {
             m_aPowerIcons[nIcon].pPower = None;
             m_aPowerIcons[nIcon].pPawn = None;
+            // ClearIcon leaves text metadata from the previous page/native setup.
+            m_aPowerIcons[nIcon].nmPowerName = 'None';
+            m_aPowerIcons[nIcon].sName = "";
+            m_aPowerIcons[nIcon].sDescription = "";
             m_aPowerIcons[nIcon].eDesiredState = SFXPowerWheelPowerState.PWPS_EmptySelectable;
             m_aPowerIcons[nIcon].SetState(SFXPowerWheelPowerState.PWPS_EmptySelectable, TRUE);
         }
@@ -416,6 +420,15 @@ public event function bool HandleInputEvent(BioGuiEvents Event, optional float f
         m_aPowerIcons[nIcon].UpdateDisplay();
         m_aPowerIcons[nIcon].SetStateDisplay();
         m_aPowerIcons[nIcon].MadeVisible(TRUE);
+        if (m_aPowerIcons[nIcon].pPower != None)
+        {
+            // Refresh native availability after restoring the full power roster.
+            // Match hover/leave without transitions or changing handler selection.
+            m_aPowerIcons[nIcon].SetHover(TRUE, TRUE);
+            m_aPowerIcons[nIcon].SetSelected(TRUE);
+            m_aPowerIcons[nIcon].SetHover(FALSE, TRUE);
+            m_aPowerIcons[nIcon].SetSelected(FALSE);
+        }
 
     }
     EPWRefreshMappingIcons();

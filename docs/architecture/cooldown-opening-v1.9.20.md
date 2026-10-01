@@ -1,0 +1,17 @@
+# Opening availability refresh, version 1.9.20
+
+The owner reports that opening the wheel during shared cooldown renders even usable powers such as Nova and Incendiary Ammo grey; hovering them restores blue. This is a reported gameplay defect. Version 1.9.20 is compiler-validated and awaits in-game confirmation.
+
+The owner subsequently requested a checkpoint, commit and push of this revision. `checkpoint/le3-wheel-v1.9.20` records that acceptance; no detailed gameplay test report was supplied, so the specific checks below remain unconfirmed.
+
+Confirmed by read-only inspection of the installed LE3 package: native `SetHover` and `SetSelected` are the icon operations used by `HoverPowerIcon` and `LeavePowerIcon`. Their implementations and `SetupPlayerPowers` are native and were not decompiled. The authored page rebuild temporarily isolates each power during native setup, snapshots its current/desired states, restores the complete manager roster, and copies those snapshots to the visible page. Installed-package-derived ammo-power defaults also show `UsesSharedCooldown = FALSE`; a global cooldown alone is therefore insufficient to infer availability for every power.
+
+Source-based hypothesis: the snapshot/rebuild leaves an initial availability state which native hover reevaluates. The minimal correction reuses the exact native icon hover/leave sequence for each occupied player slot after `MadeVisible(TRUE)`, once the full roster and final power references have been restored: `SetHover(TRUE, TRUE)`, `SetSelected(TRUE)`, `SetHover(FALSE, TRUE)`, `SetSelected(FALSE)`. Transitions are skipped and no handler hover, information text, sound or tutorial method is called. Normal preserved-hover handling still runs afterward. Empty slots skip this sequence. Both opening and page/reorder redraws use it; it adds no per-frame polling or hardcoded power exceptions. The empty-slot metadata correction from 1.9.19 remains.
+
+All 16 manifest functions compile against installed LE3; only explicitly listed class exports change; base/PC virtual inheritance passes (110/110); all nine EPW helpers remain final/nonvirtual. `git diff --check` passes. Installed `SFXGame.pcc` SHA256 before/after inspection/build/export is unchanged: `62D1B2E1E4ACF985ABAA64062438EC1AF7793ACDE3891859ABA1DB963FD4A5DC`.
+
+Reproduce with the pinned `scripts/Build-Le3.ps1` and `scripts/Export-Le3Folder.ps1` workflow. Export: `dist/EnhancedPowerWheel-LE3-CooldownOpening-v1.9.20-06157DCA9D1F/`. M3M SHA256: `06157DCA9D1FC551D495A4430DB78DC9FF602420864A40EC34D690516B8B022F`.
+
+No installation performed. Owner installation through Mod Manager merges only `Game/ME3/BioGame/CookedPCConsole/SFXGame.pcc`. Retain the manager's managed basegame backup and record installed mods first. Uninstall by restoring that backup and reapplying desired mods; see [toolchain research](../research/toolchain.md).
+
+Pending gameplay checks: open during shared cooldown without moving the stick; confirm usable Nova/ammo powers immediately have their normal blue presentation and genuinely cooling powers remain grey; repeat on both pages. Check unavailable Nova without shields, other power-specific restrictions, activated ammo, hover/leave, fades, ordering with preserved hover, empty-slot names and close/reopen. Native side effects and visual timing of the synchronous hover/leave sequence need this game check. Save/quit/reload remains separately unconfirmed.
