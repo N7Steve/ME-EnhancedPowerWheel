@@ -1,5 +1,6 @@
 public event function WheelVisibilityChanged(bool bVisible)
 {
+    local array<GFxValue> aEPWTemps;
     local int nIcon;
     local bool bPowerWheel;
     local bool bWeaponWheel;
@@ -10,7 +11,7 @@ public event function WheelVisibilityChanged(bool bVisible)
     local ASDisplayInfo oDisplay;
     local float fIconAlpha;
 
-    oWheel = GetVariableObject(m_sWheelInnerPath);
+    oWheel = EPWTempValue(GetVariableObject(m_sWheelInnerPath), aEPWTemps);
     if (oWheel != None) { oWheel.SetNumber("EPWSquadSelected", 0.0); }
 
     // Native opening can repopulate vanilla icons before the pending redraw.
@@ -27,7 +28,7 @@ public event function WheelVisibilityChanged(bool bVisible)
         oDisplay.Alpha = fIconAlpha;
         oIcon.SetDisplayInfo(oDisplay);
 
-        oMapped = oIcon.oMappedIcon.sPath != "" ? GetVariableObject(oIcon.oMappedIcon.sPath) : None;
+        oMapped = oIcon.oMappedIcon.sPath != "" ? EPWTempValue(GetVariableObject(oIcon.oMappedIcon.sPath), aEPWTemps) : None;
         if (oMapped != None)
         {
             oDisplay = oMapped.GetDisplayInfo();
@@ -35,7 +36,7 @@ public event function WheelVisibilityChanged(bool bVisible)
             oDisplay.Alpha = fIconAlpha;
             oMapped.SetDisplayInfo(oDisplay);
         }
-        oMapped = oIcon.sMappedBGPath != "" ? GetVariableObject(oIcon.sMappedBGPath) : None;
+        oMapped = oIcon.sMappedBGPath != "" ? EPWTempValue(GetVariableObject(oIcon.sMappedBGPath), aEPWTemps) : None;
         if (oMapped != None)
         {
             oDisplay = oMapped.GetDisplayInfo();
@@ -128,7 +129,7 @@ public event function WheelVisibilityChanged(bool bVisible)
         }
         if (HaveHenchmen() == FALSE)
         {
-            oWheel = GetVariableObject(m_sWheelInnerPath);
+            oWheel = EPWTempValue(GetVariableObject(m_sWheelInnerPath), aEPWTemps);
             if (oWheel != None)
             {
                 oWheel.GotoAndStop("MP");
@@ -142,4 +143,5 @@ public event function WheelVisibilityChanged(bool bVisible)
             m_aPowerIconInfo[0].Id = "P";
         }
     }
+    EPWReleaseTemps(aEPWTemps);
 }

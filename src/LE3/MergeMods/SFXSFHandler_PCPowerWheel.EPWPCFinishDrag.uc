@@ -1,6 +1,5 @@
 public final function EPWPCFinishDrag(optional bool bCancel = FALSE)
 {
-    local GFxValue oWheel;
     local int nTarget;
     local int nSource;
     local int nSlot;
@@ -18,13 +17,12 @@ public final function EPWPCFinishDrag(optional bool bCancel = FALSE)
     local int nNativeCount;
     local string sResult;
 
-    oWheel = GetVariableObject(m_sWheelInnerPath);
-    if (oWheel == None || !oWheel.GetBool("EPWPCPressed")) { return; }
-    oWheel.SetBool("EPWPCPressed", FALSE);
-    if (!oWheel.GetBool("EPWPCDragging")) { return; }
-    oWheel.SetBool("EPWPCDragging", FALSE);
-    oWheel.SetBool("EPWPCSuppressClick", TRUE);
-    nSource = int(oWheel.GetNumber("EPWPCSource")) - 1;
+    if (!GetVariableBool(m_sWheelInnerPath $ ".EPWPCPressed")) { return; }
+    SetVariableBool(m_sWheelInnerPath $ ".EPWPCPressed", FALSE);
+    if (!GetVariableBool(m_sWheelInnerPath $ ".EPWPCDragging")) { return; }
+    SetVariableBool(m_sWheelInnerPath $ ".EPWPCDragging", FALSE);
+    SetVariableBool(m_sWheelInnerPath $ ".EPWPCSuppressClick", TRUE);
+    nSource = int(GetVariableNumber(m_sWheelInnerPath $ ".EPWPCSource")) - 1;
     if (nSource >= 0 && nSource < m_aPowerIcons.Length)
     {
         // StopDragging references the shared DragPower ghost, even after paging.
@@ -38,7 +36,7 @@ public final function EPWPCFinishDrag(optional bool bCancel = FALSE)
         nTarget = EPWPCDropTarget();
         if (nTarget >= 0)
         {
-            nAbsolute = int(oWheel.GetNumber("EPWPCAbsolute")) - 1;
+            nAbsolute = int(GetVariableNumber(m_sWheelInnerPath $ ".EPWPCAbsolute")) - 1;
             if (nAbsolute < 0 && nSource >= 0 && nSource < m_aPowerIcons.Length)
             {
                 sSlotPrefix = Left(m_aPowerIcons[nSource].sID, 6);
@@ -123,7 +121,7 @@ public final function EPWPCFinishDrag(optional bool bCancel = FALSE)
         sState = m_aPowerIconInfo[0].Id;
         m_aPowerIconInfo[0].Id = Left(sState, 16) $ "X" $ Mid(sState, 17);
     }
-    oWheel.SetNumber("EPWSquadSelected", 0.0);
-    oWheel.SetString("EPWPCDropDiag", "EPW16 INPUT PC drop source=" $ string(nSource) $ " target=" $ string(nTarget) $ " nativeSlots=" $ string(nNativeCount) $ " slots=" $ string(aSquadIndices.Length) $ " result=" $ sResult);
+    SetVariableNumber(m_sWheelInnerPath $ ".EPWSquadSelected", 0.0);
+    SetVariableString(m_sWheelInnerPath $ ".EPWPCDropDiag", "EPW16 INPUT PC drop source=" $ string(nSource) $ " target=" $ string(nTarget) $ " nativeSlots=" $ string(nNativeCount) $ " slots=" $ string(aSquadIndices.Length) $ " result=" $ sResult);
     if (m_oDragPowerIcon != None) { m_oDragPowerIcon.Hide(); }
 }

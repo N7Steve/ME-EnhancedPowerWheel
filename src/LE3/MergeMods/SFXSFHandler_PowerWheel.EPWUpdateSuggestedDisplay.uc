@@ -2,9 +2,9 @@
 // A future installer can supply the same option without changing gameplay logic.
 public final function EPWUpdateSuggestedDisplay(optional bool bShowNotSuggested = FALSE)
 {
+    local array<GFxValue> aEPWTemps;
     local SFXGUIValue_PowerIcon oIcon;
-    local GFxValue oNotSuggested;
-    local GFxValue oProxy;
+    local string sWarningPath;
     local GFxValue oLoader;
     local array<ASValue> aArgs;
     local string sProxy;
@@ -17,32 +17,21 @@ public final function EPWUpdateSuggestedDisplay(optional bool bShowNotSuggested 
         oIcon = m_aPowerIcons[nIcon];
         oIcon.SetNumber("EPWVisualState", float(oIcon.eState));
         oIcon.SetNumber("EPWVisualDesiredState", float(oIcon.eDesiredState));
-        oNotSuggested = GetVariableObject(oIcon.sPath $ ".powerIconMC.sub.notSuggested");
-        if (oNotSuggested == None)
-        {
-            continue;
-        }
-        sPreviousProxy = oNotSuggested.GetString("EPWProxyPath");
+        sWarningPath = oIcon.sPath $ ".powerIconMC.sub.notSuggested";
+        sPreviousProxy = GetVariableString(sWarningPath $ ".EPWProxyPath");
         if (!bShowNotSuggested && oIcon.bVisible && oIcon.pPower != None && (oIcon.eState == SFXPowerWheelPowerState.PWPS_NotSuggested || ((oIcon.eState == SFXPowerWheelPowerState.PWPS_Selectable || oIcon.eState == SFXPowerWheelPowerState.PWPS_Selected) && oIcon.eDesiredState == SFXPowerWheelPowerState.PWPS_NotSuggested)))
         {
             nVisualState = oIcon.bSelected ? int(SFXPowerWheelPowerState.PWPS_Selected) : int(SFXPowerWheelPowerState.PWPS_Selectable);
             sProxy = oIcon.sPath $ ".powerIconMC.sub." $ oIcon.m_aPowerStatePaths[nVisualState];
-            oProxy = GetVariableObject(sProxy);
-            if (oProxy == None)
-            {
-                continue;
-            }
             if (sPreviousProxy != "" && sPreviousProxy != sProxy)
             {
-                oProxy = GetVariableObject(sPreviousProxy);
-                if (oProxy != None) { oProxy.SetVisible(FALSE); }
-                oProxy = GetVariableObject(sProxy);
+                SetVariableBool(sPreviousProxy $ "._visible", FALSE);
             }
             if (sPreviousProxy != sProxy)
             {
                 // Initialize the substitute state's loader even when native hover
                 // populated only the warning clip. SetIcon is authored in the SWF.
-                oLoader = oProxy.GetObject("iconMC");
+                oLoader = EPWTempValue(GetVariableObject(sProxy $ ".iconMC"), aEPWTemps);
                 if (oLoader != None)
                 {
                     aArgs.Length = 2;
@@ -57,9 +46,9 @@ public final function EPWUpdateSuggestedDisplay(optional bool bShowNotSuggested 
                     oLoader.SetVisible(TRUE);
                 }
             }
-            oNotSuggested.SetVisible(FALSE);
-            oProxy.SetVisible(TRUE);
-            oNotSuggested.SetString("EPWProxyPath", sProxy);
+            SetVariableBool(sWarningPath $ "._visible", FALSE);
+            SetVariableBool(sProxy $ "._visible", TRUE);
+            SetVariableString(sWarningPath $ ".EPWProxyPath", sProxy);
             oIcon.SetNumber("EPWVisualState", float(nVisualState));
             if (oIcon.eDesiredState == SFXPowerWheelPowerState.PWPS_NotSuggested)
             {
@@ -68,17 +57,16 @@ public final function EPWUpdateSuggestedDisplay(optional bool bShowNotSuggested 
         }
         else if (sPreviousProxy != "")
         {
-            oProxy = GetVariableObject(sPreviousProxy);
             // Do not hide a substitute that has become the real current state.
             sProxy = oIcon.sPath $ ".powerIconMC.sub." $ oIcon.m_aPowerStatePaths[int(oIcon.eState)];
-            if (oProxy != None && sPreviousProxy != sProxy) { oProxy.SetVisible(FALSE); }
-            oNotSuggested.SetString("EPWProxyPath", "");
+            if (sPreviousProxy != sProxy) { SetVariableBool(sPreviousProxy $ "._visible", FALSE); }
+            SetVariableString(sWarningPath $ ".EPWProxyPath", "");
             oIcon.SetStateDisplay();
             if (oIcon.bVisible && oIcon.pPower != None)
             {
-                oProxy = GetVariableObject(sProxy);
-                if (oProxy != None) { oProxy.SetVisible(TRUE); }
+                SetVariableBool(sProxy $ "._visible", TRUE);
             }
         }
     }
+    EPWReleaseTemps(aEPWTemps);
 }

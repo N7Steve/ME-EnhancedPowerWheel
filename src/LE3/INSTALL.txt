@@ -1,3 +1,31 @@
+LE3 GFx lifetime test build v1.10.4
+---------------------------------
+Candidate fix for the 2026-10-01 hang report. Compilation does not establish
+runtime memory stability. Closed EPW movies skip their object lookups;
+outline/fade state uses scalar paths; EPW temporary wrappers are unregistered
+after use. Native persistent icons and inherited Super.Update remain intact.
+PC key polling and drag hit-testing still request scoped temporary wrappers.
+The engine's normal GC performs destruction; no forced/per-frame GC is added.
+
+Install only through Mod Manager after identifying its managed LE3 basegame
+backup and restore path, recording installed mods and backing up the test save.
+Changed installed file: Game/ME3/BioGame/CookedPCConsole/SFXGame.pcc only.
+Uninstall by restoring that managed backup and reapplying desired mods.
+Keep the existing HUD compatibility bridge for this A/B test; it dispatches
+inherited EPW methods. No new bridge package is included in this export.
+Build/export do not install anything or alter the live process.
+
+Validate 10-15 minute sessions with the same scene/save/FPS/mods: closed wheels,
+repeated opens/closes, long holds, controller and PC (including the inactive
+movie), weapon wheel, page fades, LB move/swap, drag cancellation, key badges,
+combo and move outlines, device changes, level changes, save/quit/reload.
+Measure private memory AND GFxValue counts by movie at comparable intervals;
+record cleanup stalls. Compare previous/current EPW with the same DTW/HUD,
+then without DTW. Accept only a bounded trend plus intact UI, not survival
+for two minutes. New live process reads require authorization for that test.
+
+Previous controls and validation history
+---------------------------------------
 LE3 PC update v1.10.3
 -----------------------------
 This export includes the existing controller implementation and adds the PC

@@ -1,5 +1,6 @@
 public event function WheelVisibilityChanged(bool bVisible)
 {
+    local array<GFxValue> aEPWTemps;
     local int nIcon;
     local GFxValue oHenchBG;
     local GFxValue oWheel;
@@ -7,7 +8,7 @@ public event function WheelVisibilityChanged(bool bVisible)
     local array<ASValue> aArgs;
     local ASValue oDown;
     
-    oWheel = GetVariableObject(m_sWheelInnerPath);
+    oWheel = EPWTempValue(GetVariableObject(m_sWheelInnerPath), aEPWTemps);
     EPWPCFinishDrag(TRUE);
     if (oWheel != None)
     {
@@ -18,7 +19,7 @@ public event function WheelVisibilityChanged(bool bVisible)
         {
             oWheel.SetBool("EPWPCWasHandlingKeys", m_bHandleKeyPresses);
             StartHandlingKeyPresses();
-            oKey = GetVariableObject("_global.Key");
+            oKey = EPWTempValue(GetVariableObject("_global.Key"), aEPWTemps);
             if (oKey != None)
             {
                 aArgs.Length = 1;
@@ -49,12 +50,13 @@ public event function WheelVisibilityChanged(bool bVisible)
     }
     else if (HaveHenchmen() == FALSE)
     {
-        oHenchBG = GetVariableObject("mainContent.DashMain.Dash.teamPanel1");
+        oHenchBG = EPWTempValue(GetVariableObject("mainContent.DashMain.Dash.teamPanel1"), aEPWTemps);
         oHenchBG.SetVisible(FALSE);
-        oHenchBG = GetVariableObject("mainContent.DashMain.Dash.teamPanel2");
+        oHenchBG = EPWTempValue(GetVariableObject("mainContent.DashMain.Dash.teamPanel2"), aEPWTemps);
         oHenchBG.SetVisible(FALSE);
     }
     oPanel.SetClipVisibility("mainContent.QuickSlots.Control", bVisible);
     m_oCenterWeaponIcon.oIconMC.SetVisible(bVisible);
-    EPWPCPresentation();
+    EPWPCPresentation(!bVisible);
+    EPWReleaseTemps(aEPWTemps);
 }

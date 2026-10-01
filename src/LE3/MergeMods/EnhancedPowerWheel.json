@@ -8,6 +8,8 @@
           "entryname": "SFXSFHandler_PowerWheel",
           "addtoclassorreplace": {
             "scriptfilenames": [
+              "SFXSFHandler_PowerWheel.EPWTempValue.uc",
+              "SFXSFHandler_PowerWheel.EPWReleaseTemps.uc",
               "SFXSFHandler_PowerWheel.EPWPrimerMask.uc",
               "SFXSFHandler_PowerWheel.EPWDetonatorMask.uc",
               "SFXSFHandler_PowerWheel.EPWPlayerPowers.uc",

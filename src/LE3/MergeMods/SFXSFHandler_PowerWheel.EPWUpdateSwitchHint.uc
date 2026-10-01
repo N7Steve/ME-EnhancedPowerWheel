@@ -1,5 +1,8 @@
 public final function EPWUpdateSwitchHint(bool bVisible)
 {
+    local array<GFxValue> aEPWTemps;
+    local string sFingerprint;
+    local bool bNativeRevealed;
     local GFxValue oWheel;
     local GFxValue oHint;
     local GFxValue oIcon;
@@ -47,27 +50,41 @@ public final function EPWUpdateSwitchHint(bool bVisible)
     local bool bSquadSlot;
     local int nSquadSelected;
 
-    oWheel = GetVariableObject(m_sWheelInnerPath);
+    // Close/mode cleanup only runs when custom help was actually packed.
+    if (!bVisible || !m_bShowUseMapText || m_ePowerWheelMode != SFXPowerWheelMode.PWM_Powers)
+    {
+        if (!GetVariableBool(m_sWheelInnerPath $ ".EPWHelpActive")) { EPWReleaseTemps(aEPWTemps); return; }
+    }
+    else
+    {
+        sFingerprint = string(m_nCurrentPowerIconIndex) $ "|" $ (m_aPowerIconInfo.Length > 0 ? m_aPowerIconInfo[0].Id : "") $ "|" $ string(GetVariableNumber(m_sWheelInnerPath $ ".EPWSquadSelected"));
+        sFingerprint $= "|" $ GetVariableString(m_sMapText3Path $ ".text") $ "|" $ GetVariableString(m_sMapText2Path $ ".text") $ "|" $ GetVariableString(m_sMapText1Path $ ".text") $ "|" $ GetVariableString(m_sUseTextPath $ ".text");
+        for (nRow = 0; nRow < 3; ++nRow) { sFingerprint $= "|" $ GetVariableString(m_sWheelInnerPath $ ".EPWMapTexture" $ string(nRow)); }
+        // Native hover/text callbacks can reveal a source with unchanged text.
+        bNativeRevealed = (GetVariableString(m_sMapText3Path $ ".text") != "" && GetVariableBool(m_sMapText3Path $ "._visible")) || (GetVariableString(m_sMapText2Path $ ".text") != "" && GetVariableBool(m_sMapText2Path $ "._visible")) || (GetVariableString(m_sMapText1Path $ ".text") != "" && GetVariableBool(m_sMapText1Path $ "._visible")) || (GetVariableString(m_sUseTextPath $ ".text") != "" && GetVariableBool(m_sUseTextPath $ "._visible"));
+        if (!bNativeRevealed && GetVariableBool(m_sWheelInnerPath $ ".EPWHelpActive") && sFingerprint == GetVariableString(m_sWheelInnerPath $ ".EPWHelpFingerprint")) { EPWReleaseTemps(aEPWTemps); return; }
+    }
+    oWheel = EPWTempValue(GetVariableObject(m_sWheelInnerPath), aEPWTemps);
     if (oWheel == None)
     {
-        return;
+        EPWReleaseTemps(aEPWTemps); return;
     }
-    oHint = oWheel.GetObject("EPWSwitchHint");
-    oIcon = oWheel.GetObject("EPWSwitchButton");
-    oOrderHint = oWheel.GetObject("EPWOrderHint");
-    oOrderIcon = oWheel.GetObject("EPWOrderButton");
+    oHint = EPWTempValue(oWheel.GetObject("EPWSwitchHint"), aEPWTemps);
+    oIcon = EPWTempValue(oWheel.GetObject("EPWSwitchButton"), aEPWTemps);
+    oOrderHint = EPWTempValue(oWheel.GetObject("EPWOrderHint"), aEPWTemps);
+    oOrderIcon = EPWTempValue(oWheel.GetObject("EPWOrderButton"), aEPWTemps);
     // Native order, top to bottom. Cache authored positions for other wheel modes.
-    aTexts.AddItem(GetVariableObject(m_sMapText3Path));
-    aButtons.AddItem(GetVariableObject(m_sMapButton3Path));
-    aTexts.AddItem(GetVariableObject(m_sMapText2Path));
-    aButtons.AddItem(GetVariableObject(m_sMapButton2Path));
-    aTexts.AddItem(GetVariableObject(m_sMapText1Path));
-    aButtons.AddItem(GetVariableObject(m_sMapButton1Path));
-    aTexts.AddItem(GetVariableObject(m_sUseTextPath));
-    aButtons.AddItem(GetVariableObject(m_sUseButtonPath));
+    aTexts.AddItem(EPWTempValue(GetVariableObject(m_sMapText3Path), aEPWTemps));
+    aButtons.AddItem(EPWTempValue(GetVariableObject(m_sMapButton3Path), aEPWTemps));
+    aTexts.AddItem(EPWTempValue(GetVariableObject(m_sMapText2Path), aEPWTemps));
+    aButtons.AddItem(EPWTempValue(GetVariableObject(m_sMapButton2Path), aEPWTemps));
+    aTexts.AddItem(EPWTempValue(GetVariableObject(m_sMapText1Path), aEPWTemps));
+    aButtons.AddItem(EPWTempValue(GetVariableObject(m_sMapButton1Path), aEPWTemps));
+    aTexts.AddItem(EPWTempValue(GetVariableObject(m_sUseTextPath), aEPWTemps));
+    aButtons.AddItem(EPWTempValue(GetVariableObject(m_sUseButtonPath), aEPWTemps));
     for (nRow = 0; nRow < 3; ++nRow)
     {
-        aTargets.AddItem(oWheel.GetObject("EPWMapTarget" $ string(nRow)));
+        aTargets.AddItem(EPWTempValue(oWheel.GetObject("EPWMapTarget" $ string(nRow)), aEPWTemps));
     }
     for (nRow = 0; nRow < aTexts.Length; ++nRow)
     {
@@ -94,7 +111,7 @@ public final function EPWUpdateSwitchHint(bool bVisible)
         }
         for (nRow = 0; nRow < aTexts.Length; ++nRow)
         {
-            oProxy = oWheel.GetObject("EPWHelpText" $ string(nRow));
+            oProxy = EPWTempValue(oWheel.GetObject("EPWHelpText" $ string(nRow)), aEPWTemps);
             if (oProxy != None) { oProxy.SetVisible(FALSE); }
             if (aTexts[nRow] != None && aButtons[nRow] != None && aTexts[nRow].GetBool("EPWHelpPacked"))
             {
@@ -110,13 +127,16 @@ public final function EPWUpdateSwitchHint(bool bVisible)
                 aTexts[nRow].SetBool("EPWHelpPacked", FALSE);
             }
         }
-        return;
+        oWheel.SetBool("EPWHelpActive", FALSE);
+        oWheel.SetString("EPWHelpFingerprint", "");
+        EPWReleaseTemps(aEPWTemps); return;
     }
+    oWheel.SetBool("EPWHelpActive", TRUE);
     oTemplate = aTexts[3];
     oButton = aButtons[3];
     if (oTemplate == None || oButton == None || aTexts[0] == None)
     {
-        return;
+        EPWReleaseTemps(aEPWTemps); return;
     }
     // Keep the accepted spacing, with another 24 pixels right/up for the block.
     oTemplateDisplay = oTemplate.GetDisplayInfo();
@@ -149,7 +169,7 @@ public final function EPWUpdateSwitchHint(bool bVisible)
         // Keep source/metadata indices intact; visit A, Y, B, X for layout.
         nRow = nLayoutRow == 0 ? 3 : nLayoutRow - 1;
         oRow = aTexts[nRow];
-        oProxy = oWheel.GetObject("EPWHelpText" $ string(nRow));
+        oProxy = EPWTempValue(oWheel.GetObject("EPWHelpText" $ string(nRow)), aEPWTemps);
         if (oRow != None && aButtons[nRow] != None && oRow.GetText() != "")
         {
             sNativeText $= Caps(oRow.GetText()) $ " ";
@@ -169,13 +189,13 @@ public final function EPWUpdateSwitchHint(bool bVisible)
                 aArgs[4].N = oRow.GetNumber("_width");
                 aArgs[5].N = 36.0;
                 oWheel.Invoke("createTextField", aArgs);
-                oProxy = oWheel.GetObject(aArgs[0].S);
+                oProxy = EPWTempValue(oWheel.GetObject(aArgs[0].S), aEPWTemps);
                 if (oProxy != None)
                 {
                     oProxy.SetBool("selectable", FALSE);
                     oProxy.SetBool("embedFonts", TRUE);
-                    oGlow = CreateObject("flash.filters.GlowFilter");
-                    oFilters = CreateArray();
+                    oGlow = EPWTempValue(CreateObject("flash.filters.GlowFilter"), aEPWTemps);
+                    oFilters = EPWTempValue(CreateArray(), aEPWTemps);
                     if (oGlow != None && oFilters != None)
                     {
                         oGlow.SetNumber("color", 401457.0);
@@ -244,7 +264,7 @@ public final function EPWUpdateSwitchHint(bool bVisible)
                     aArgs[4].N = fTargetSize + 8.0;
                     aArgs[5].N = fTargetSize + 16.0;
                     oWheel.Invoke("createTextField", aArgs);
-                    oTarget = oWheel.GetObject(sTargetName);
+                    oTarget = EPWTempValue(oWheel.GetObject(sTargetName), aEPWTemps);
                     aTargets[nRow] = oTarget;
                     if (oTarget != None)
                     {
@@ -301,7 +321,7 @@ public final function EPWUpdateSwitchHint(bool bVisible)
         aArgs[4].N = (nRow == 0 || nRow == 2) ? oTemplate.GetNumber("_width") : 40.0;
         aArgs[5].N = (nRow == 0 || nRow == 2) ? 36.0 : 48.0;
         oWheel.Invoke("createTextField", aArgs);
-        oRow = oWheel.GetObject(aArgs[0].S);
+        oRow = EPWTempValue(oWheel.GetObject(aArgs[0].S), aEPWTemps);
         if (oRow != None)
         {
             oRow.SetBool("selectable", FALSE);
@@ -312,8 +332,8 @@ public final function EPWUpdateSwitchHint(bool bVisible)
                 else { oOrderHint = oRow; }
                 // Recreate the authored outline explicitly: copying the native
                 // static filter array did not reproduce it in the owner screenshot.
-                oGlow = CreateObject("flash.filters.GlowFilter");
-                oFilters = CreateArray();
+                oGlow = EPWTempValue(CreateObject("flash.filters.GlowFilter"), aEPWTemps);
+                oFilters = EPWTempValue(CreateArray(), aEPWTemps);
                 if (oGlow != None && oFilters != None)
                 {
                     oGlow.SetNumber("color", 401457.0); // 0x062031.
@@ -345,7 +365,7 @@ public final function EPWUpdateSwitchHint(bool bVisible)
     }
     if (oHint == None || oIcon == None || oOrderHint == None || oOrderIcon == None)
     {
-        return;
+        EPWReleaseTemps(aEPWTemps); return;
     }
     oEngine = SFXEngine(Class'Engine'.static.GetEngine());
     if (oEngine != None)
@@ -402,4 +422,6 @@ public final function EPWUpdateSwitchHint(bool bVisible)
     oIcon.SetDisplayInfo(oRowDisplay);
     oHint.SetVisible(TRUE);
     oIcon.SetVisible(TRUE);
+    oWheel.SetString("EPWHelpFingerprint", sFingerprint);
+    EPWReleaseTemps(aEPWTemps);
 }

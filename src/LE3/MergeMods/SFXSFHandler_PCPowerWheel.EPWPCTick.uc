@@ -1,7 +1,6 @@
 public final function EPWPCTick()
 {
-    local GFxValue oWheel;
-    local GFxValue oRoot;
+    local array<GFxValue> aEPWTemps;
     local GFxValue oKey;
     local ASValue oDown;
     local array<ASValue> aArgs;
@@ -13,15 +12,14 @@ public final function EPWPCTick()
     local float fY;
     local string sState;
 
-    oWheel = GetVariableObject(m_sWheelInnerPath);
-    if (oWheel == None || m_aPowerIconInfo.Length == 0 || !m_bVisible || m_ePowerWheelMode != SFXPowerWheelMode.PWM_PC) { return; }
+    if (m_aPowerIconInfo.Length == 0 || !m_bVisible || m_ePowerWheelMode != SFXPowerWheelMode.PWM_PC) { EPWReleaseTemps(aEPWTemps); return; }
     if (!HasFocus())
     {
         EPWPCFinishDrag(TRUE);
-        return;
+        EPWReleaseTemps(aEPWTemps); return;
     }
     // Flash Key uses keycode 32; rising edges avoid repeats while held.
-    oKey = GetVariableObject("_global.Key");
+    oKey = EPWTempValue(GetVariableObject("_global.Key"), aEPWTemps);
     if (oKey != None)
     {
         aArgs.Length = 1;
@@ -30,14 +28,14 @@ public final function EPWPCTick()
         oDown = oKey.Invoke("isDown", aArgs);
         bSpaceDown = oDown.B;
     }
-    if (bSpaceDown && !oWheel.GetBool("EPWPCSpaceDown") && Len(m_aPowerIconInfo[0].Id) == 18)
+    if (bSpaceDown && !GetVariableBool(m_sWheelInnerPath $ ".EPWPCSpaceDown") && Len(m_aPowerIconInfo[0].Id) == 18)
     {
-        if (oWheel.GetBool("EPWPCPressed") && !oWheel.GetBool("EPWPCDragging"))
+        if (GetVariableBool(m_sWheelInnerPath $ ".EPWPCPressed") && !GetVariableBool(m_sWheelInnerPath $ ".EPWPCDragging"))
         {
             EPWPCFinishDrag(TRUE);
-            oWheel.SetBool("EPWPCSuppressClick", TRUE);
+            SetVariableBool(m_sWheelInnerPath $ ".EPWPCSuppressClick", TRUE);
         }
-        if (oWheel.GetBool("EPWPCDragging") && oWheel.GetNumber("EPWPCAbsolute") <= 0.0)
+        if (GetVariableBool(m_sWheelInnerPath $ ".EPWPCDragging") && GetVariableNumber(m_sWheelInnerPath $ ".EPWPCAbsolute") <= 0.0)
         {
             // Squad powers cannot move across Shepard's pages.
             EPWPCFinishDrag(TRUE);
@@ -45,29 +43,27 @@ public final function EPWPCTick()
         LeavePowerIcon(m_nCurrentPowerIconIndex, TRUE);
         Super.HandleInputEvent(BioGuiEvents.BIOGUI_EVENT_BUTTON_RTHUMB, 1.0);
     }
-    oWheel.SetBool("EPWPCSpaceDown", bSpaceDown);
-    if (!oWheel.GetBool("EPWPCPressed")) { return; }
-    oRoot = GetVariableObject("_root");
-    if (oRoot == None) { return; }
-    nSource = int(oWheel.GetNumber("EPWPCSource")) - 1;
-    if (nSource < 0 || nSource >= m_aPowerIcons.Length) { return; }
-    if (!oWheel.GetBool("EPWPCDragging"))
+    SetVariableBool(m_sWheelInnerPath $ ".EPWPCSpaceDown", bSpaceDown);
+    if (!GetVariableBool(m_sWheelInnerPath $ ".EPWPCPressed")) { EPWReleaseTemps(aEPWTemps); return; }
+    nSource = int(GetVariableNumber(m_sWheelInnerPath $ ".EPWPCSource")) - 1;
+    if (nSource < 0 || nSource >= m_aPowerIcons.Length) { EPWReleaseTemps(aEPWTemps); return; }
+    if (!GetVariableBool(m_sWheelInnerPath $ ".EPWPCDragging"))
     {
-        fX = oRoot.GetNumber("_xmouse") - oWheel.GetNumber("EPWPCDownX");
-        fY = oRoot.GetNumber("_ymouse") - oWheel.GetNumber("EPWPCDownY");
-        if (fX * fX + fY * fY < m_fDragStartThreshold * m_fDragStartThreshold) { return; }
+        fX = GetVariableNumber("_root._xmouse") - GetVariableNumber(m_sWheelInnerPath $ ".EPWPCDownX");
+        fY = GetVariableNumber("_root._ymouse") - GetVariableNumber(m_sWheelInnerPath $ ".EPWPCDownY");
+        if (fX * fX + fY * fY < m_fDragStartThreshold * m_fDragStartThreshold) { EPWReleaseTemps(aEPWTemps); return; }
         sState = m_aPowerIconInfo[0].Id;
-        if (Len(sState) != 18) { return; }
-        oWheel.SetBool("EPWPCDragging", TRUE);
-        oWheel.SetBool("EPWPCSuppressClick", TRUE);
-        nAbsolute = int(oWheel.GetNumber("EPWPCAbsolute")) - 1;
+        if (Len(sState) != 18) { EPWReleaseTemps(aEPWTemps); return; }
+        SetVariableBool(m_sWheelInnerPath $ ".EPWPCDragging", TRUE);
+        SetVariableBool(m_sWheelInnerPath $ ".EPWPCSuppressClick", TRUE);
+        nAbsolute = int(GetVariableNumber(m_sWheelInnerPath $ ".EPWPCAbsolute")) - 1;
         if (nAbsolute >= 0)
         {
             m_aPowerIconInfo[0].Id = Left(sState, 16) $ Mid("ABCDEFGHIJKLMNOP", nAbsolute, 1) $ Mid(sState, 17);
         }
         else
         {
-            oWheel.SetNumber("EPWSquadSelected", float(nSource + 1));
+            SetVariableNumber(m_sWheelInnerPath $ ".EPWSquadSelected", float(nSource + 1));
         }
         m_aPowerIcons[nSource].AS_BeginDragging();
         PlayGuiSound('HUDPowerWheelQueueingHighlightedPowerForActivation');
@@ -86,4 +82,5 @@ public final function EPWPCTick()
             LeavePowerIcon(m_nCurrentPowerIconIndex, TRUE);
         }
     }
+    EPWReleaseTemps(aEPWTemps);
 }

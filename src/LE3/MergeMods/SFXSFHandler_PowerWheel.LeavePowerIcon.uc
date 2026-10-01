@@ -1,11 +1,9 @@
 public final event function LeavePowerIcon(int nIconIndex, bool bSkipTransition)
 {
-    local GFxValue oStateClip;
-    local GFxValue oOutline;
+    local string sOutlinePath;
     local int nCandidate;
     local int nState;
     local bool bSoftLeave;
-    local ASDisplayInfo oDisplay;
 
     if (nIconIndex >= 0 && nIconIndex < m_aPowerIcons.Length && m_nCurrentPowerIconIndex == nIconIndex)
     {
@@ -19,35 +17,27 @@ public final event function LeavePowerIcon(int nIconIndex, bool bSkipTransition)
     {
         for (nState = 0; nState < 8; ++nState)
         {
-            oStateClip = GetVariableObject(m_aPowerIcons[nCandidate].sPath $ ".powerIconMC.sub." $ m_aPowerIcons[nCandidate].m_aPowerStatePaths[nState]);
-            if (oStateClip != None)
+            sOutlinePath = m_aPowerIcons[nCandidate].sPath $ ".powerIconMC.sub." $ m_aPowerIcons[nCandidate].m_aPowerStatePaths[nState] $ ".EPWComboOutlineRed";
+            if (GetVariableBool(sOutlinePath $ ".EPWCreated"))
             {
-                oOutline = oStateClip.GetObject("EPWComboOutlineRed");
-                if (oOutline != None)
+                if (bSoftLeave)
                 {
-                    if (bSoftLeave)
+                    if (GetVariableBool(sOutlinePath $ ".EPWComboActive") && !GetVariableBool(sOutlinePath $ ".EPWComboFadingOut"))
                     {
-                        if (oOutline.GetBool("EPWComboActive") && !oOutline.GetBool("EPWComboFadingOut"))
-                        {
-                            oDisplay = oOutline.GetDisplayInfo();
-                            oOutline.SetNumber("EPWComboExitAlpha", oDisplay.Alpha);
-                            oOutline.SetNumber("EPWComboExitStart", m_pPlayerController.WorldInfo.RealTimeSeconds);
-                            oOutline.SetBool("EPWComboFadingOut", TRUE);
-                        }
-                    }
-                    else
-                    {
-                        oOutline.SetVisible(FALSE);
-                        oOutline.SetBool("EPWComboActive", FALSE);
-                        oOutline.SetBool("EPWComboFadingOut", FALSE);
+                        SetVariableNumber(sOutlinePath $ ".EPWComboExitAlpha", GetVariableNumber(sOutlinePath $ "._alpha"));
+                        SetVariableNumber(sOutlinePath $ ".EPWComboExitStart", m_pPlayerController.WorldInfo.RealTimeSeconds);
+                        SetVariableBool(sOutlinePath $ ".EPWComboFadingOut", TRUE);
                     }
                 }
-                oOutline = oStateClip.GetObject("EPWComboOutlineViolet");
-                if (oOutline != None)
+                else
                 {
-                    oOutline.SetVisible(FALSE);
+                    SetVariableBool(sOutlinePath $ "._visible", FALSE);
+                    SetVariableBool(sOutlinePath $ ".EPWComboActive", FALSE);
+                    SetVariableBool(sOutlinePath $ ".EPWComboFadingOut", FALSE);
                 }
             }
+            // Retire legacy violet clips if present, without wrapping them.
+            SetVariableBool(m_aPowerIcons[nCandidate].sPath $ ".powerIconMC.sub." $ m_aPowerIcons[nCandidate].m_aPowerStatePaths[nState] $ ".EPWComboOutlineViolet._visible", FALSE);
         }
     }
 

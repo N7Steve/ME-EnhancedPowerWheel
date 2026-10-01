@@ -1,6 +1,7 @@
 // Reorder GUI content only; never change a pawn's manager or display indices.
 public final function EPWSquadLayout(BioPawn pPawn, array<int> aIndices, optional int nFrom = -1, optional int nTo = -1)
 {
+    local array<GFxValue> aEPWTemps;
     local BioGlobalVariableTable oPlot;
     local SFXGUIValue_PowerIcon oIcon;
     local int nCompanion;
@@ -38,14 +39,14 @@ public final function EPWSquadLayout(BioPawn pPawn, array<int> aIndices, optiona
     local string sSlotPrefix;
     local array<bool> aVisible;
 
-    if (pPawn == None) { return; }
+    if (pPawn == None) { EPWReleaseTemps(aEPWTemps); return; }
     if (m_ePowerWheelMode == SFXPowerWheelMode.PWM_PC && aIndices.Length != 5)
     {
         // PC's list may describe populated powers. Ordering needs all five
         // authored physical slots, including holes, as in the controller UI.
         if (pPawn == m_pHench1Pawn) { sSlotPrefix = "Icon10"; }
         else if (pPawn == m_pHench2Pawn) { sSlotPrefix = "Icon20"; }
-        else { return; }
+        else { EPWReleaseTemps(aEPWTemps); return; }
         aIndices.Length = 0;
         for (nSlot = 1; nSlot <= 5; ++nSlot)
         {
@@ -61,7 +62,7 @@ public final function EPWSquadLayout(BioPawn pPawn, array<int> aIndices, optiona
     }
     if (aIndices.Length != 5)
     {
-        return;
+        EPWReleaseTemps(aEPWTemps); return;
     }
     // Fixed banks by the installed game's companion tags, independent of side.
     nCompanion = -1;
@@ -158,7 +159,7 @@ public final function EPWSquadLayout(BioPawn pPawn, array<int> aIndices, optiona
     }
     // One bounded latest write/load record per side, using the existing reader.
     // Readback distinguishes a plot-write failure from opening reconstruction.
-    oWheel = GetVariableObject(m_sWheelInnerPath);
+    oWheel = EPWTempValue(GetVariableObject(m_sWheelInnerPath), aEPWTemps);
     if (oWheel != None)
     {
         sRecord = "EPW16 INPUT squad tag=" $ string(pPawn.Tag) $ " bank=" $ string(nCompanion) $ " swap=" $ string(bSwap);
@@ -183,7 +184,7 @@ public final function EPWSquadLayout(BioPawn pPawn, array<int> aIndices, optiona
         oIcon.SetSelected(FALSE);
         oIcon.ClearIcon();
         // ClearIcon invalidates image content even when the proxy path matches.
-        oLoader = GetVariableObject(oIcon.sPath $ ".powerIconMC.sub.notSuggested");
+        oLoader = EPWTempValue(GetVariableObject(oIcon.sPath $ ".powerIconMC.sub.notSuggested"), aEPWTemps);
         if (oLoader != None) { oLoader.SetString("EPWProxyPath", ""); }
         oIcon.pPower = None;
         oIcon.pPawn = None;
@@ -258,7 +259,7 @@ public final function EPWSquadLayout(BioPawn pPawn, array<int> aIndices, optiona
             for (nState = 0; nState < 8; ++nState)
             {
                 if (nState == int(SFXPowerWheelPowerState.PWPS_EmptySelectable) || nState == int(SFXPowerWheelPowerState.PWPS_EmptySelected)) { continue; }
-                oLoader = GetVariableObject(oIcon.sPath $ ".powerIconMC.sub." $ oIcon.m_aPowerStatePaths[nState] $ ".iconMC");
+                oLoader = EPWTempValue(GetVariableObject(oIcon.sPath $ ".powerIconMC.sub." $ oIcon.m_aPowerStatePaths[nState] $ ".iconMC"), aEPWTemps);
                 if (oLoader != None)
                 {
                     sRecord $= " loader" $ string(nState) $ "=" $ string(int(oLoader.GetNumber("m_nIcon"))) $ "/" $ string(oLoader.GetBool("IsLoading")) $ "/" $ string(oLoader.GetBool("_visible"));
@@ -273,4 +274,5 @@ public final function EPWSquadLayout(BioPawn pPawn, array<int> aIndices, optiona
             if (oWheel != None) { oWheel.SetString("EPWSquadImage" $ string(aIndices[nSlot]), sRecord); }
         }
     }
+    EPWReleaseTemps(aEPWTemps);
 }

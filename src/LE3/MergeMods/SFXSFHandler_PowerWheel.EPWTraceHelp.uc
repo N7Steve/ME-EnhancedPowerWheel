@@ -1,6 +1,7 @@
 // Keep the 1.9.16 memory trace available while verifying the metadata fix.
 public final function EPWTraceHelp()
 {
+    local array<GFxValue> aEPWTemps;
     local GFxValue oWheel;
     local GFxValue oSource;
     local GFxValue oProxy;
@@ -17,12 +18,12 @@ public final function EPWTraceHelp()
 
     if (!m_bVisible || m_ePowerWheelMode != SFXPowerWheelMode.PWM_Powers || m_pPlayerController == None || m_pPlayerController.WorldInfo == None)
     {
-        return;
+        EPWReleaseTemps(aEPWTemps); return;
     }
-    oWheel = GetVariableObject(m_sWheelInnerPath);
-    if (oWheel == None) { return; }
     fNow = m_pPlayerController.WorldInfo.RealTimeSeconds;
-    if (fNow < oWheel.GetNumber("EPWDiagNext")) { return; }
+    if (fNow < GetVariableNumber(m_sWheelInnerPath $ ".EPWDiagNext")) { EPWReleaseTemps(aEPWTemps); return; }
+    oWheel = EPWTempValue(GetVariableObject(m_sWheelInnerPath), aEPWTemps);
+    if (oWheel == None) { EPWReleaseTemps(aEPWTemps); return; }
     oWheel.SetNumber("EPWDiagNext", fNow + 1.0);
     aPaths.AddItem(m_sMapText3Path);
     aPaths.AddItem(m_sMapText2Path);
@@ -30,9 +31,9 @@ public final function EPWTraceHelp()
     aPaths.AddItem(m_sUseTextPath);
     for (nRow = 0; nRow < aPaths.Length; ++nRow)
     {
-        oSource = GetVariableObject(aPaths[nRow]);
-        oProxy = oWheel.GetObject("EPWHelpText" $ string(nRow));
-        oTarget = oWheel.GetObject("EPWMapTarget" $ string(nRow));
+        oSource = EPWTempValue(GetVariableObject(aPaths[nRow]), aEPWTemps);
+        oProxy = EPWTempValue(oWheel.GetObject("EPWHelpText" $ string(nRow)), aEPWTemps);
+        oTarget = EPWTempValue(oWheel.GetObject("EPWMapTarget" $ string(nRow)), aEPWTemps);
         sRecord = "EPW16 ROW" $ string(nRow) $ " t=" $ string(fNow) $ " hover=" $ string(m_nCurrentPowerIconIndex) $ " path=" $ aPaths[nRow];
         if (oSource != None)
         {
@@ -61,4 +62,5 @@ public final function EPWTraceHelp()
         oWheel.SetString("EPWDiagRow" $ string(nRow), sRecord);
         LogInternal(sRecord, 'EPW16');
     }
+    EPWReleaseTemps(aEPWTemps);
 }

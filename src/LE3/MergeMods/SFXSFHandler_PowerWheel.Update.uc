@@ -1,7 +1,7 @@
 public event function Update(float fDeltaT)
 {
+    local array<GFxValue> aEPWTemps;
     local GFxValue oIcon;
-    local GFxValue oMapped;
     local ASDisplayInfo oDisplay;
     local string sState;
     local string sPhase;
@@ -26,10 +26,13 @@ public event function Update(float fDeltaT)
     local bool bMoveVisible;
     local int nVisualState;
     local int nVisualDesiredState;
-    local GFxValue oWheel;
     local int nSquadSelected;
+    local string sStatePath;
+    local string sOutlinePath;
 
     Super.Update(fDeltaT);
+    // Closed movies can still Advance (including inactive input-device movies).
+    if (!m_bVisible) { EPWReleaseTemps(aEPWTemps); return; }
     if ((m_ePowerWheelMode == SFXPowerWheelMode.PWM_Powers || m_ePowerWheelMode == SFXPowerWheelMode.PWM_PC) && m_aPowerIconInfo.Length > 0 && m_aPowerIconInfo[0].Id == "P")
     {
         HandleInputEvent(BioGuiEvents.BIOGUI_EVENT_BUTTON_LTHUMB, -1.0);
@@ -45,38 +48,24 @@ public event function Update(float fDeltaT)
             m_aPowerIcons[nIcon].SetDisplayInfo(oDisplay);
             m_aPowerIcons[nIcon].SetBool("EPWOpeningPending", FALSE);
 
-            oMapped = m_aPowerIcons[nIcon].oMappedIcon.sPath != "" ? GetVariableObject(m_aPowerIcons[nIcon].oMappedIcon.sPath) : None;
-            if (oMapped != None)
-            {
-                oDisplay = oMapped.GetDisplayInfo();
-                oDisplay.hasAlpha = TRUE;
-                oDisplay.Alpha = 100.0;
-                oMapped.SetDisplayInfo(oDisplay);
-            }
-            oMapped = m_aPowerIcons[nIcon].sMappedBGPath != "" ? GetVariableObject(m_aPowerIcons[nIcon].sMappedBGPath) : None;
-            if (oMapped != None)
-            {
-                oDisplay = oMapped.GetDisplayInfo();
-                oDisplay.hasAlpha = TRUE;
-                oDisplay.Alpha = 100.0;
-                oMapped.SetDisplayInfo(oDisplay);
-            }
+            if (m_aPowerIcons[nIcon].oMappedIcon.sPath != "") { SetVariableNumber(m_aPowerIcons[nIcon].oMappedIcon.sPath $ "._alpha", 100.0); }
+            if (m_aPowerIcons[nIcon].sMappedBGPath != "") { SetVariableNumber(m_aPowerIcons[nIcon].sMappedBGPath $ "._alpha", 100.0); }
         }
     }
     EPWUpdateSwitchHint(m_aPowerIconInfo.Length > 0 && m_aPowerIconInfo[0].Id != "");
     EPWTraceHelp();
     if (m_ePowerWheelMode != SFXPowerWheelMode.PWM_Powers && m_ePowerWheelMode != SFXPowerWheelMode.PWM_PC)
     {
-        return;
+        EPWReleaseTemps(aEPWTemps); return;
     }
     if (m_aPowerIconInfo.Length == 0)
     {
-        return;
+        EPWReleaseTemps(aEPWTemps); return;
     }
     sState = m_aPowerIconInfo[0].Id;
     if (sState == "")
     {
-        return;
+        EPWReleaseTemps(aEPWTemps); return;
     }
     EPWUpdateSuggestedDisplay();
     EPWRefreshMappingIcons();
@@ -120,15 +109,13 @@ public event function Update(float fDeltaT)
                 {
                     continue;
                 }
-                oStateClip = GetVariableObject(m_aPowerIcons[nIcon].sPath $ ".powerIconMC.sub." $ m_aPowerIcons[nIcon].m_aPowerStatePaths[nState]);
-                if (oStateClip == None)
+                sStatePath = m_aPowerIcons[nIcon].sPath $ ".powerIconMC.sub." $ m_aPowerIcons[nIcon].m_aPowerStatePaths[nState];
+                sOutlinePath = sStatePath $ ".EPWComboOutlineRed";
+                if (!GetVariableBool(sOutlinePath $ ".EPWCreated"))
                 {
-                    continue;
-                }
-                oOutline = oStateClip.GetObject("EPWComboOutlineRed");
-                if (oOutline == None)
-                {
-                    oOutline = oStateClip.CreateEmptyMovieClip("EPWComboOutlineRed", 100);
+                    oStateClip = EPWTempValue(GetVariableObject(sStatePath), aEPWTemps);
+                    if (oStateClip == None) { continue; }
+                    oOutline = EPWTempValue(oStateClip.CreateEmptyMovieClip("EPWComboOutlineRed", 100), aEPWTemps);
                     if (oOutline == None)
                     {
                         continue;
@@ -174,13 +161,11 @@ public event function Update(float fDeltaT)
                     aArgs[1].N = -6.45;
                     oOutline.Invoke("lineTo", aArgs);
                 }
-                oOutline.SetBool("EPWComboActive", TRUE);
-                oOutline.SetBool("EPWComboFadingOut", FALSE);
-                oOutline.SetVisible(TRUE);
-                oDisplay = oOutline.GetDisplayInfo();
-                oDisplay.hasAlpha = TRUE;
-                oDisplay.Alpha = (56.0 + 28.0 * fPulse) * fComboFade;
-                oOutline.SetDisplayInfo(oDisplay);
+                SetVariableBool(sOutlinePath $ ".EPWCreated", TRUE);
+                SetVariableBool(sOutlinePath $ ".EPWComboActive", TRUE);
+                SetVariableBool(sOutlinePath $ ".EPWComboFadingOut", FALSE);
+                SetVariableBool(sOutlinePath $ "._visible", TRUE);
+                SetVariableNumber(sOutlinePath $ "._alpha", (56.0 + 28.0 * fPulse) * fComboFade);
             }
         }
     }
@@ -188,8 +173,7 @@ public event function Update(float fDeltaT)
     // The eight player clips are reused across pages, so update visibility by
     // physical slot every frame rather than storing a GFx clip reference.
     nSelectedSlot = InStr("ABCDEFGHIJKLMNOP", Mid(sState, 16, 1));
-    oWheel = GetVariableObject(m_sWheelInnerPath);
-    nSquadSelected = oWheel != None ? int(oWheel.GetNumber("EPWSquadSelected")) - 1 : -1;
+    nSquadSelected = int(GetVariableNumber(m_sWheelInnerPath $ ".EPWSquadSelected")) - 1;
     bSquadMoving = nSquadSelected >= 0 && nSquadSelected < m_aPowerIcons.Length && (m_ePowerWheelMode == SFXPowerWheelMode.PWM_PC ? m_aPowerIcons[nSquadSelected].GetBool("_visible") : m_aPowerIcons[nSquadSelected].bVisible) && EPWHasPower(m_aPowerIcons[nSquadSelected]);
     for (nIcon = 0; nIcon < m_aPowerIcons.Length; ++nIcon)
     {
@@ -204,32 +188,27 @@ public event function Update(float fDeltaT)
         bMoveOutline = sPhase != "O" && ((nSlot >= 0 && nSelectedSlot == nSlot + int(Mid(sState, 17, 1)) * 8) || (nIcon == nSquadSelected && bMoveVisible && EPWHasPower(m_aPowerIcons[nIcon])) || (bMoveTarget && nIcon == m_nCurrentPowerIconIndex && bMoveVisible));
         for (nState = 0; nState < 8; ++nState)
         {
-            oStateClip = GetVariableObject(m_aPowerIcons[nIcon].sPath $ ".powerIconMC.sub." $ m_aPowerIcons[nIcon].m_aPowerStatePaths[nState]);
-            if (oStateClip == None)
+            sStatePath = m_aPowerIcons[nIcon].sPath $ ".powerIconMC.sub." $ m_aPowerIcons[nIcon].m_aPowerStatePaths[nState];
+            sOutlinePath = sStatePath $ ".EPWComboOutlineRed";
+            // Existing outlines animate through scalar paths, without wrappers.
+            if (GetVariableBool(sOutlinePath $ ".EPWComboFadingOut"))
             {
-                continue;
-            }
-            // Continue departing combo outlines even over empty/non-primer slots.
-            oOutline = oStateClip.GetObject("EPWComboOutlineRed");
-            if (oOutline != None && oOutline.GetBool("EPWComboFadingOut"))
-            {
-                fComboFade = FClamp((m_pPlayerController.WorldInfo.RealTimeSeconds - oOutline.GetNumber("EPWComboExitStart")) / 0.2, 0.0, 1.0);
+                fComboFade = FClamp((m_pPlayerController.WorldInfo.RealTimeSeconds - GetVariableNumber(sOutlinePath $ ".EPWComboExitStart")) / 0.2, 0.0, 1.0);
                 fComboFade = fComboFade * fComboFade * (3.0 - 2.0 * fComboFade);
-                oDisplay = oOutline.GetDisplayInfo();
-                oDisplay.hasAlpha = TRUE;
-                oDisplay.Alpha = oOutline.GetNumber("EPWComboExitAlpha") * (1.0 - fComboFade);
-                oOutline.SetDisplayInfo(oDisplay);
+                SetVariableNumber(sOutlinePath $ "._alpha", GetVariableNumber(sOutlinePath $ ".EPWComboExitAlpha") * (1.0 - fComboFade));
                 if (fComboFade >= 1.0)
                 {
-                    oOutline.SetVisible(FALSE);
-                    oOutline.SetBool("EPWComboActive", FALSE);
-                    oOutline.SetBool("EPWComboFadingOut", FALSE);
+                    SetVariableBool(sOutlinePath $ "._visible", FALSE);
+                    SetVariableBool(sOutlinePath $ ".EPWComboActive", FALSE);
+                    SetVariableBool(sOutlinePath $ ".EPWComboFadingOut", FALSE);
                 }
             }
-            oOutline = oStateClip.GetObject("EPWMoveOutlineGreen");
-            if (oOutline == None && bMoveOutline && (nState == nVisualState || nState == nVisualDesiredState))
+            sOutlinePath = sStatePath $ ".EPWMoveOutlineGreen";
+            if (!GetVariableBool(sOutlinePath $ ".EPWCreated") && bMoveOutline && (nState == nVisualState || nState == nVisualDesiredState))
             {
-                oOutline = oStateClip.CreateEmptyMovieClip("EPWMoveOutlineGreen", 102);
+                oStateClip = EPWTempValue(GetVariableObject(sStatePath), aEPWTemps);
+                if (oStateClip == None) { continue; }
+                oOutline = EPWTempValue(oStateClip.CreateEmptyMovieClip("EPWMoveOutlineGreen", 102), aEPWTemps);
                 if (oOutline == None)
                 {
                     continue;
@@ -273,16 +252,17 @@ public event function Update(float fDeltaT)
                 aArgs[0].N = -37.0;
                 aArgs[1].N = -6.45;
                 oOutline.Invoke("lineTo", aArgs);
+                SetVariableBool(sOutlinePath $ ".EPWCreated", TRUE);
             }
-            if (oOutline != None)
+            if (GetVariableBool(sOutlinePath $ ".EPWCreated"))
             {
-                oOutline.SetVisible(bMoveOutline && (nState == nVisualState || nState == nVisualDesiredState));
+                SetVariableBool(sOutlinePath $ "._visible", bMoveOutline && (nState == nVisualState || nState == nVisualDesiredState));
             }
         }
     }
     if (sPhase != "O" && sPhase != "I")
     {
-        return;
+        EPWReleaseTemps(aEPWTemps); return;
     }
 
     if (m_aPowerIcons.Length > 0)
@@ -304,7 +284,7 @@ public event function Update(float fDeltaT)
             }
         }
         m_aPowerIconInfo[0].Id = Left(m_aPowerIconInfo[0].Id, 18);
-        return;
+        EPWReleaseTemps(aEPWTemps); return;
     }
 
     oDisplay = oIcon.GetDisplayInfo();
@@ -344,21 +324,8 @@ public event function Update(float fDeltaT)
         oDisplay.Alpha = fAlpha;
         m_aPowerIcons[nIcon].SetDisplayInfo(oDisplay);
 
-        oMapped = m_aPowerIcons[nIcon].oMappedIcon.sPath != "" ? GetVariableObject(m_aPowerIcons[nIcon].oMappedIcon.sPath) : None;
-        if (oMapped != None)
-        {
-            oDisplay = oMapped.GetDisplayInfo();
-            oDisplay.hasAlpha = TRUE;
-            oDisplay.Alpha = fAlpha;
-            oMapped.SetDisplayInfo(oDisplay);
-        }
-        oMapped = m_aPowerIcons[nIcon].sMappedBGPath != "" ? GetVariableObject(m_aPowerIcons[nIcon].sMappedBGPath) : None;
-        if (oMapped != None)
-        {
-            oDisplay = oMapped.GetDisplayInfo();
-            oDisplay.hasAlpha = TRUE;
-            oDisplay.Alpha = fAlpha;
-            oMapped.SetDisplayInfo(oDisplay);
-        }
+        if (m_aPowerIcons[nIcon].oMappedIcon.sPath != "") { SetVariableNumber(m_aPowerIcons[nIcon].oMappedIcon.sPath $ "._alpha", fAlpha); }
+        if (m_aPowerIcons[nIcon].sMappedBGPath != "") { SetVariableNumber(m_aPowerIcons[nIcon].sMappedBGPath $ "._alpha", fAlpha); }
     }
+    EPWReleaseTemps(aEPWTemps);
 }

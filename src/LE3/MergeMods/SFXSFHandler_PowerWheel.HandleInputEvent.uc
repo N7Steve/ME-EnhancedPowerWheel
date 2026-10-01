@@ -1,5 +1,6 @@
 public event function bool HandleInputEvent(BioGuiEvents Event, optional float fValue = 1.0)
 {
+    local array<GFxValue> aEPWTemps;
     local int nIcon;
     local int nSlot;
     local int nAbsoluteSlot;
@@ -42,7 +43,7 @@ public event function bool HandleInputEvent(BioGuiEvents Event, optional float f
     local GFxValue oWheel;
     local int nSquadSelected;
 
-    oWheel = GetVariableObject(m_sWheelInnerPath);
+    oWheel = EPWTempValue(GetVariableObject(m_sWheelInnerPath), aEPWTemps);
 
     // 16 source characters (0-F, dash empty), selection and page.
     // Version 3 also stores a power identity for each occupied save slot.
@@ -168,11 +169,11 @@ public event function bool HandleInputEvent(BioGuiEvents Event, optional float f
         {
             m_vLStickInput.Y = fValue;
         }
-        return TRUE;
+        EPWReleaseTemps(aEPWTemps); return TRUE;
     }
     if (Len(sState) > 18 && !(fValue < 0.0 && (Event == BioGuiEvents.BIOGUI_EVENT_BUTTON_RTHUMB || Event == BioGuiEvents.BIOGUI_EVENT_BUTTON_LTHUMB)))
     {
-        return TRUE;
+        EPWReleaseTemps(aEPWTemps); return TRUE;
     }
 
     switch (Event)
@@ -202,7 +203,7 @@ public event function bool HandleInputEvent(BioGuiEvents Event, optional float f
                 }
                 break;
             }
-            return Super(SFXGUIMovie).HandleInputEvent(Event, fValue);
+            EPWReleaseTemps(aEPWTemps); return Super(SFXGUIMovie).HandleInputEvent(Event, fValue);
         case BioGuiEvents.BIOGUI_EVENT_BUTTON_LTHUMB:
             if (m_ePowerWheelMode == SFXPowerWheelMode.PWM_Powers || m_ePowerWheelMode == SFXPowerWheelMode.PWM_PC)
             {
@@ -215,7 +216,7 @@ public event function bool HandleInputEvent(BioGuiEvents Event, optional float f
                 }
                 break;
             }
-            return Super(SFXGUIMovie).HandleInputEvent(Event, fValue);
+            EPWReleaseTemps(aEPWTemps); return Super(SFXGUIMovie).HandleInputEvent(Event, fValue);
         case BioGuiEvents.BIOGUI_EVENT_BUTTON_LB:
             if (m_ePowerWheelMode == SFXPowerWheelMode.PWM_Powers || m_ePowerWheelMode == SFXPowerWheelMode.PWM_PC)
             {
@@ -296,7 +297,7 @@ public event function bool HandleInputEvent(BioGuiEvents Event, optional float f
                 }
                 break;
             }
-            return Super(SFXGUIMovie).HandleInputEvent(Event, fValue);
+            EPWReleaseTemps(aEPWTemps); return Super(SFXGUIMovie).HandleInputEvent(Event, fValue);
         case BioGuiEvents.BIOGUI_EVENT_BUTTON_A:
             SelectCurrentWheelItem(m_ePowerWheelMode);
             break;
@@ -326,11 +327,11 @@ public event function bool HandleInputEvent(BioGuiEvents Event, optional float f
         case BioGuiEvents.BIOGUI_EVENT_BUTTON_RTHUMB_RELEASE:
             if (m_ePowerWheelMode == SFXPowerWheelMode.PWM_Powers || m_ePowerWheelMode == SFXPowerWheelMode.PWM_PC)
             {
-                return TRUE;
+                EPWReleaseTemps(aEPWTemps); return TRUE;
             }
-            return Super(SFXGUIMovie).HandleInputEvent(Event, fValue);
+            EPWReleaseTemps(aEPWTemps); return Super(SFXGUIMovie).HandleInputEvent(Event, fValue);
         default:
-            return Super(SFXGUIMovie).HandleInputEvent(Event, fValue);
+            EPWReleaseTemps(aEPWTemps); return Super(SFXGUIMovie).HandleInputEvent(Event, fValue);
     }
 
     if ((m_ePowerWheelMode == SFXPowerWheelMode.PWM_Powers || m_ePowerWheelMode == SFXPowerWheelMode.PWM_PC) && m_aPowerIconInfo.Length > 0)
@@ -343,7 +344,7 @@ public event function bool HandleInputEvent(BioGuiEvents Event, optional float f
     }
     if (!bRefreshPage)
     {
-        return TRUE;
+        EPWReleaseTemps(aEPWTemps); return TRUE;
     }
 
     if (!bPreserveHover)
@@ -361,7 +362,7 @@ public event function bool HandleInputEvent(BioGuiEvents Event, optional float f
     EPWPlayerPowers(aAvailablePowers);
     if (m_pShepardPawn == None || m_pShepardPawn.PowerManager == None || m_oPowerIndices.aPlayer.Length < 8)
     {
-        return TRUE;
+        EPWReleaseTemps(aEPWTemps); return TRUE;
     }
     // Let native setup initialize each real power, without competing powers.
     // The manager array and display indices are restored synchronously below.
@@ -511,5 +512,5 @@ public event function bool HandleInputEvent(BioGuiEvents Event, optional float f
     m_aPowerIconInfo[0].Id = sMap $ sSelected $ string(nPage);
     EPWUpdateSuggestedDisplay();
     EPWRefreshMappingIcons();
-    return TRUE;
+    EPWReleaseTemps(aEPWTemps); return TRUE;
 }

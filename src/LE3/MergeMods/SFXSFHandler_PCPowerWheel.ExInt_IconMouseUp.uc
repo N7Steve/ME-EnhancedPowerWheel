@@ -1,29 +1,30 @@
 public final function ExInt_IconMouseUp(string sIconID)
 {
+    local array<GFxValue> aEPWTemps;
     local int nIcon;
     local SFXPowerWheelMode eMode;
     local GFxValue oWheel;
     
     if (IsMouseShown() == FALSE)
     {
-        return;
+        EPWReleaseTemps(aEPWTemps); return;
     }
-    oWheel = GetVariableObject(m_sWheelInnerPath);
+    oWheel = EPWTempValue(GetVariableObject(m_sWheelInnerPath), aEPWTemps);
     if (m_ePowerWheelMode == SFXPowerWheelMode.PWM_PC && oWheel != None)
     {
         EPWPCFinishDrag();
-        if (oWheel.GetBool("EPWPCSuppressClick") || m_aPowerIconInfo.Length == 0 || Len(m_aPowerIconInfo[0].Id) != 18) { return; }
+        if (oWheel.GetBool("EPWPCSuppressClick") || m_aPowerIconInfo.Length == 0 || Len(m_aPowerIconInfo[0].Id) != 18) { EPWReleaseTemps(aEPWTemps); return; }
     }
     eMode = FindIconIndexFromPath(sIconID, nIcon);
     if (nIcon == -1 || eMode == SFXPowerWheelMode.PWM_NONE)
     {
         HandleQuickSlotMouseUp(sIconID);
-        return;
+        EPWReleaseTemps(aEPWTemps); return;
     }
     if (m_nDraggingIcon == nIcon && m_bDoingDrag != FALSE)
     {
         m_nDraggingIcon = -1;
-        return;
+        EPWReleaseTemps(aEPWTemps); return;
     }
     if (eMode == SFXPowerWheelMode.PWM_Powers && m_nCurrentPowerIconIndex == nIcon)
     {
@@ -46,4 +47,5 @@ public final function ExInt_IconMouseUp(string sIconID)
         }
     }
     m_nDraggingIcon = -1;
+    EPWReleaseTemps(aEPWTemps);
 }

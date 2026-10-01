@@ -1,5 +1,6 @@
 public final function ExInt_IconMouseDown(string sIconID)
 {
+    local array<GFxValue> aEPWTemps;
     local int nIcon;
     local SFXPowerWheelMode eMode;
     local GFxValue oWheel;
@@ -9,16 +10,16 @@ public final function ExInt_IconMouseDown(string sIconID)
     
     if (IsMouseShown() == FALSE)
     {
-        return;
+        EPWReleaseTemps(aEPWTemps); return;
     }
-    oWheel = GetVariableObject(m_sWheelInnerPath);
+    oWheel = EPWTempValue(GetVariableObject(m_sWheelInnerPath), aEPWTemps);
     if (oWheel != None) { oWheel.SetBool("EPWPCSuppressClick", FALSE); }
     m_bDraggingPower = FALSE;
     eMode = FindIconIndexFromPath(sIconID, nIcon);
     if (nIcon == -1 || eMode == SFXPowerWheelMode.PWM_NONE)
     {
         HandleQuickSlotMouseDown(sIconID);
-        return;
+        EPWReleaseTemps(aEPWTemps); return;
     }
     if (eMode == SFXPowerWheelMode.PWM_Powers)
     {
@@ -32,14 +33,14 @@ public final function ExInt_IconMouseDown(string sIconID)
         // EPW owns lower-bar drags; native quickslot/weapon gestures stay native.
         m_bDraggingPower = FALSE;
         m_nDraggingIcon = -1;
-        if (m_aPowerIconInfo.Length == 0 || Len(m_aPowerIconInfo[0].Id) != 18) { return; }
-        oWheel = GetVariableObject(m_sWheelInnerPath);
-        oRoot = GetVariableObject("_root");
-        if (oWheel == None || oRoot == None) { return; }
+        if (m_aPowerIconInfo.Length == 0 || Len(m_aPowerIconInfo[0].Id) != 18) { EPWReleaseTemps(aEPWTemps); return; }
+        oWheel = EPWTempValue(GetVariableObject(m_sWheelInnerPath), aEPWTemps);
+        oRoot = EPWTempValue(GetVariableObject("_root"), aEPWTemps);
+        if (oWheel == None || oRoot == None) { EPWReleaseTemps(aEPWTemps); return; }
         oWheel.SetBool("EPWPCSuppressClick", FALSE);
-        if (!EPWHasPower(m_aPowerIcons[nIcon]) || m_oDragPowerIcon == None) { return; }
+        if (!EPWHasPower(m_aPowerIcons[nIcon]) || m_oDragPowerIcon == None) { EPWReleaseTemps(aEPWTemps); return; }
         oSource = m_aPowerIcons[nIcon];
-        if (IsPawnBlocked(oSource.pPawn)) { return; }
+        if (IsPawnBlocked(oSource.pPawn)) { EPWReleaseTemps(aEPWTemps); return; }
         oWheel.SetBool("EPWPCPressed", TRUE);
         oWheel.SetBool("EPWPCDragging", FALSE);
         oWheel.SetNumber("EPWPCSource", float(nIcon + 1));
@@ -57,7 +58,8 @@ public final function ExInt_IconMouseDown(string sIconID)
         m_oDragPowerIcon.eDesiredState = SFXPowerWheelPowerState.PWPS_Selected;
         m_oDragPowerIcon.SetState(SFXPowerWheelPowerState.PWPS_Selected, TRUE);
         m_oDragPowerIcon.UpdateDisplay();
-        return;
+        EPWReleaseTemps(aEPWTemps); return;
     }
     m_nDraggingIcon = nIcon;
+    EPWReleaseTemps(aEPWTemps);
 }

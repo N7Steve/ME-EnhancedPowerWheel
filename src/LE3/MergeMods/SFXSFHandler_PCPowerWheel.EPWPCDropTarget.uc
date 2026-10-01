@@ -1,14 +1,15 @@
 // Hit-test the authored mouse zones in stage coordinates, including empty slots.
 public final function int EPWPCDropTarget()
 {
+    local array<GFxValue> aEPWTemps;
     local GFxValue oRoot;
     local GFxValue oZone;
     local array<ASValue> aArgs;
     local ASValue oHit;
     local int nIcon;
 
-    oRoot = GetVariableObject("_root");
-    if (oRoot == None) { return -1; }
+    oRoot = EPWTempValue(GetVariableObject("_root"), aEPWTemps);
+    if (oRoot == None) { EPWReleaseTemps(aEPWTemps); return -1; }
     aArgs.Length = 3;
     aArgs[0].Type = ASType.AS_Number;
     aArgs[0].N = oRoot.GetNumber("_xmouse");
@@ -21,10 +22,10 @@ public final function int EPWPCDropTarget()
         // Match the SWF's own mouse callbacks: test clip visibility, not the
         // native bookkeeping flag left by a squad ClearIcon/reconstruction.
         if (!m_aPowerIcons[nIcon].GetBool("_visible")) { continue; }
-        oZone = GetVariableObject(m_aPowerIcons[nIcon].sPath $ ".MouseZone");
+        oZone = EPWTempValue(GetVariableObject(m_aPowerIcons[nIcon].sPath $ ".MouseZone"), aEPWTemps);
         if (oZone == None) { continue; }
         oHit = oZone.Invoke("hitTest", aArgs);
-        if (oHit.B) { return nIcon; }
+        if (oHit.B) { EPWReleaseTemps(aEPWTemps); return nIcon; }
     }
-    return -1;
+    EPWReleaseTemps(aEPWTemps); return -1;
 }

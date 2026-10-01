@@ -1,5 +1,6 @@
 public event function SetMapText(string sText1, SFXPowerWheelMapButtonIcon eIcon1, optional string sText2 = "", optional SFXPowerWheelMapButtonIcon eIcon2 = 0, optional string sText3 = "", optional SFXPowerWheelMapButtonIcon eIcon3 = 0)
 {
+    local array<GFxValue> aEPWTemps;
     local GFxValue oWheel;
     local array<string> aTexts;
     local array<SFXPowerWheelMapButtonIcon> aIcons;
@@ -8,7 +9,7 @@ public event function SetMapText(string sText1, SFXPowerWheelMapButtonIcon eIcon
     local int nSide;
     if (!m_bShowUseMapText)
     {
-        return;
+        EPWReleaseTemps(aEPWTemps); return;
     }
     oPanel.SetTextFieldText(m_sMapText1Path, sText1);
     oPanel.SetClipVisibility(m_sMapButton1Path, sText1 != "");
@@ -16,7 +17,7 @@ public event function SetMapText(string sText1, SFXPowerWheelMapButtonIcon eIcon
     oPanel.SetClipVisibility(m_sMapButton2Path, sText2 != "");
     oPanel.SetTextFieldText(m_sMapText3Path, sText3);
     oPanel.SetClipVisibility(m_sMapButton3Path, sText3 != "");
-    oWheel = GetVariableObject(m_sWheelInnerPath);
+    oWheel = EPWTempValue(GetVariableObject(m_sWheelInnerPath), aEPWTemps);
     if (oWheel != None)
     {
         oWheel.SetString("EPWDiagInput0", "EPW16 INPUT0 raw={" $ sText3 $ "} enum=" $ string(eIcon3));
@@ -76,4 +77,5 @@ public event function SetMapText(string sText1, SFXPowerWheelMapButtonIcon eIcon
             oWheel.SetString("EPWMapTexture" $ string(nRow), sTexture);
         }
     }
+    EPWReleaseTemps(aEPWTemps);
 }

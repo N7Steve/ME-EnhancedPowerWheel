@@ -8,6 +8,8 @@ The owner reports v1.10.2 works well, including companion reordering. Version 1.
 
 HUD Enhancements 1.1 uses separate handlers that bypass EPW's PC frame update. Compatibility patch 0.4 adds a PC bridge alongside the existing controller bridge and keeps HUD radar, camera handling and graphics. It requires EPW 1.10.3; replace the previous compatibility DLC and install this patch last through Mod Manager. Combined gameplay validation is pending. See [HUD compatibility for PC](docs/architecture/hud-compatibility-pc-v0.4.md).
 
+LE3 v1.10.4 is a test build for the reported GFxValue accumulation/hang. It guards inactive movies, uses scalar paths for recurring presentation work, and unregisters only scoped EPW temporary wrappers. All 29 functions compile against installed LE3 and the local reference; runtime memory stability and UI regression tests remain pending. See [GFx lifetime findings, export and A/B validation](docs/architecture/gfx-lifetime-v1.10.4.md). Build/export do not install anything.
+
 ## LE3 checkpoint: two-page ordering wheel
 
 Version 1.6 extends the directional combo outline to documented LE3 single-player primers and the loaded powers' actual detonator arrays. Visible squad powers participate alongside Shepard's powers. A red border marks a potential detonator for the hovered primer; a violet border marks a potential primer for the hovered detonator. Version 1.7 closes the missing upper-left outline segment reported in game. Conditional primers still require their combat conditions. See [combo hover implementation](docs/architecture/combo-hover-v1.6.md). The exported Mod Manager folder is under `dist/`; build scripts do not install it.
